@@ -3,6 +3,7 @@ import { MetricCard } from '../components/common/MetricCard';
 import { RadarChart } from '../components/charts/RadarChart';
 import { StabilityTrendChart } from '../components/charts/StabilityTrendChart';
 import { NotificationPanel } from '../components/notifications/NotificationPanel';
+import { WeakestDomainIndicator } from '../components/analytics/WeakestDomainIndicator';
 import { Activity, Battery, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export const Dashboard = () => {
@@ -62,9 +63,12 @@ export const Dashboard = () => {
                     <StabilityTrendChart />
                 </div>
 
-                {/* Radar Chart Area */}
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
-                    <RadarChart />
+                {/* Radar Chart & Weakest Domain Area */}
+                <div className="flex flex-col gap-6">
+                    <WeakestDomainIndicator />
+                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px]">
+                        <RadarChart />
+                    </div>
                 </div>
             </div>
 
