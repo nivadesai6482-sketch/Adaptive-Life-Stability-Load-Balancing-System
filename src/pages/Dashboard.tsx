@@ -1,5 +1,6 @@
 import React from 'react';
 import { MetricCard } from '../components/common/MetricCard';
+import { RadarChart } from '../components/charts/RadarChart';
 import { Activity, Battery, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export const Dashboard = () => {
@@ -53,29 +54,26 @@ export const Dashboard = () => {
                 />
             </div>
 
-            {/* Analytics Area Placeholder */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[500px] flex flex-col items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-blue-50 flex items-center justify-center mb-4">
-                    <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {/* Analytics Area Primary */}
+                <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+                        <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">No Time Series Data Yet</h3>
+                    <p className="text-gray-500 text-center max-w-sm mb-6">
+                        Connect your data sources or run an initial capacity assessment to begin populating real-time timeline metrics.
+                    </p>
+                    <button type="button" className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Configure Data Sources
+                    </button>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No Analytics Data Yet</h3>
-                <p className="text-gray-500 text-center max-w-sm mb-6">
-                    Connect your data sources or run an initial capacity assessment to begin populating real-time stability metrics.
-                </p>
-                <button type="button" className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Configure Data Sources
-                </button>
-            </div>
 
-            {/* Secondary Metrics Placeholder Grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[300px] flex items-center justify-center">
-                    <p className="text-gray-400 font-medium">Secondary Analytics Component Area</p>
-                </div>
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[300px] flex items-center justify-center">
-                    <p className="text-gray-400 font-medium">Secondary Analytics Component Area</p>
+                {/* Radar Chart Area */}
+                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
+                    <RadarChart />
                 </div>
             </div>
         </div>
