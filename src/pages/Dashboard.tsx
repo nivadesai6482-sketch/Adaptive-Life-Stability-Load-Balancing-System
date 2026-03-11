@@ -2,6 +2,7 @@ import React from 'react';
 import { MetricCard } from '../components/common/MetricCard';
 import { RadarChart } from '../components/charts/RadarChart';
 import { StabilityTrendChart } from '../components/charts/StabilityTrendChart';
+import { NotificationPanel } from '../components/notifications/NotificationPanel';
 import { Activity, Battery, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export const Dashboard = () => {
@@ -64,6 +65,13 @@ export const Dashboard = () => {
                 {/* Radar Chart Area */}
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
                     <RadarChart />
+                </div>
+            </div>
+
+            {/* System Alerts Row */}
+            <div className="grid grid-cols-1 gap-6">
+                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[300px] max-h-[400px]">
+                    <NotificationPanel />
                 </div>
             </div>
         </div>
