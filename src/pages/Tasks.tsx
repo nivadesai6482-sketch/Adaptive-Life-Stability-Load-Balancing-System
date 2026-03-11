@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Circle, Clock, AlertTriangle } from 'lucide-react';
+import { TaskForm } from '../components/common/TaskForm';
 
 interface Task {
     id: string;
@@ -41,12 +42,9 @@ export const Tasks = () => {
                         Current active commitments prioritized by system load.
                     </p>
                 </div>
-                <div className="flex">
-                    <button type="button" className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-colors">
-                        Add New Task
-                    </button>
-                </div>
             </div>
+
+            <TaskForm />
 
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
