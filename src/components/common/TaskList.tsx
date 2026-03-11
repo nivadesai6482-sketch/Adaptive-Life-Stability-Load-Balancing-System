@@ -1,21 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CheckCircle2, Circle, Clock, AlertTriangle, Trash2 } from 'lucide-react';
-
-interface Task {
-    id: string;
-    title: string;
-    priority: 'low' | 'medium' | 'high';
-    deadline: string;
-    status: 'todo' | 'in-progress' | 'completed';
-}
-
-const initialTasks: Task[] = [
-    { id: '1', title: 'Prepare Q3 performance review deck', priority: 'high', deadline: 'Today, 2:00 PM', status: 'in-progress' },
-    { id: '2', title: 'Review new API integration doc', priority: 'medium', deadline: 'Tomorrow, 10:00 AM', status: 'todo' },
-    { id: '3', title: 'Schedule sync with Design team', priority: 'low', deadline: 'Friday, 3:30 PM', status: 'todo' },
-    { id: '4', title: 'Submit expenses for August', priority: 'medium', deadline: 'Aug 31', status: 'completed' },
-    { id: '5', title: 'Finalize server architecture', priority: 'high', deadline: 'Today, 5:00 PM', status: 'todo' },
-];
+import { useTaskStore } from '../../store/taskStore';
 
 const priorityConfig = {
     high: { icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-50' },
@@ -30,11 +15,7 @@ const statusConfig = {
 };
 
 export const TaskList = () => {
-    const [tasks, setTasks] = useState<Task[]>(initialTasks);
-
-    const handleDelete = (id: string) => {
-        setTasks(tasks.filter(task => task.id !== id));
-    };
+    const { tasks, deleteTask } = useTaskStore();
 
     if (tasks.length === 0) {
         return (
@@ -100,7 +81,7 @@ export const TaskList = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button
-                                            onClick={() => handleDelete(task.id)}
+                                            onClick={() => deleteTask(task.id)}
                                             className="inline-flex items-center justify-center rounded-md p-2 text-red-400 hover:bg-red-50 hover:text-red-700 transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none"
                                             title="Delete Task"
                                         >

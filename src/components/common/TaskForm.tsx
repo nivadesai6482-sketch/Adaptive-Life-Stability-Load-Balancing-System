@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
+import { useTaskStore, Task } from '../../store/taskStore';
 
 export const TaskForm = () => {
+    const { addTask } = useTaskStore();
     const [title, setTitle] = useState('');
-    const [priority, setPriority] = useState('medium');
+    const [priority, setPriority] = useState<Task['priority']>('medium');
     const [deadline, setDeadline] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Placeholder for submission logic
-        console.log({ title, priority, deadline });
+
+        addTask({
+            title,
+            priority,
+            deadline
+        });
 
         // Reset form after submit
         setTitle('');
@@ -54,7 +60,7 @@ export const TaskForm = () => {
                                 id="priority"
                                 name="priority"
                                 value={priority}
-                                onChange={(e) => setPriority(e.target.value)}
+                                onChange={(e) => setPriority(e.target.value as Task['priority'])}
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 pl-3"
                             >
                                 <option value="low">Low</option>
