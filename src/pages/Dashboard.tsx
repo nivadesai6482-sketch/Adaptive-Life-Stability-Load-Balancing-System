@@ -4,6 +4,7 @@ import { RadarChart } from '../components/charts/RadarChart';
 import { StabilityTrendChart } from '../components/charts/StabilityTrendChart';
 import { NotificationPanel } from '../components/notifications/NotificationPanel';
 import { WeakestDomainIndicator } from '../components/analytics/WeakestDomainIndicator';
+import { DomainInputForm } from '../components/forms/DomainInputForm';
 import { Activity, Battery, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export const Dashboard = () => {
@@ -72,10 +73,15 @@ export const Dashboard = () => {
                 </div>
             </div>
 
-            {/* System Alerts Row */}
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* System Alerts Row */}
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[300px] max-h-[400px]">
                     <NotificationPanel />
+                </div>
+                
+                {/* Domain Input Form */}
+                <div className="rounded-xl shadow-sm min-h-[300px] max-h-[400px]">
+                    <DomainInputForm />
                 </div>
             </div>
         </div>
