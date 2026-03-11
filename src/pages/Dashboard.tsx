@@ -1,4 +1,6 @@
 import React from 'react';
+import { MetricCard } from '../components/common/MetricCard';
+import { Activity, Battery, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export const Dashboard = () => {
     return (
@@ -17,6 +19,38 @@ export const Dashboard = () => {
                         Run Capacity Assessment
                     </button>
                 </div>
+            </div>
+
+            {/* Primary Metrics Grid */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <MetricCard
+                    title="Current Energy Level"
+                    value="78%"
+                    trend="down"
+                    trendValue="-5% from yesterday"
+                    icon={<Battery className="h-5 w-5" />}
+                />
+                <MetricCard
+                    title="Active Commitments"
+                    value="12"
+                    trend="up"
+                    trendValue="+2 new tasks"
+                    icon={<Activity className="h-5 w-5" />}
+                />
+                <MetricCard
+                    title="System Stability"
+                    value="Stable"
+                    trend="neutral"
+                    trendValue="Optimal load"
+                    icon={<CheckCircle2 className="h-5 w-5 text-green-500" />}
+                />
+                <MetricCard
+                    title="Burnout Risk"
+                    value="Low"
+                    trend="down"
+                    trendValue="Improved by 12%"
+                    icon={<AlertTriangle className="h-5 w-5" />}
+                />
             </div>
 
             {/* Analytics Area Placeholder */}
