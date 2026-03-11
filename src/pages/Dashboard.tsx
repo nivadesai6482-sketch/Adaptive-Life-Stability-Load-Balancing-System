@@ -5,9 +5,21 @@ import { StabilityTrendChart } from '../components/charts/StabilityTrendChart';
 import { NotificationPanel } from '../components/notifications/NotificationPanel';
 import { WeakestDomainIndicator } from '../components/analytics/WeakestDomainIndicator';
 import { DomainInputForm } from '../components/forms/DomainInputForm';
-import { Activity, Battery, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Activity, Battery, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { calculateLSI } from '../utils/stabilityCalculator';
 
 export const Dashboard = () => {
+    // Current mock domain data
+    const currentScores = {
+        Time: 85,
+        Energy: 60,
+        Cognitive: 90,
+        Emotional: 75,
+        Financial: 80,
+    };
+    
+    const lsiScore = calculateLSI(currentScores);
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -29,8 +41,15 @@ export const Dashboard = () => {
             {/* Primary Metrics Grid */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <MetricCard
+                    title="Life Stability Index"
+                    value={lsiScore.toFixed(1)}
+                    trend="up"
+                    trendValue="+1.2 from last week"
+                    icon={<ShieldAlert className="h-5 w-5 text-indigo-500" />}
+                />
+                <MetricCard
                     title="Current Energy Level"
-                    value="78%"
+                    value={`${currentScores.Energy}%`}
                     trend="down"
                     trendValue="-5% from yesterday"
                     icon={<Battery className="h-5 w-5" />}
@@ -41,13 +60,6 @@ export const Dashboard = () => {
                     trend="up"
                     trendValue="+2 new tasks"
                     icon={<Activity className="h-5 w-5" />}
-                />
-                <MetricCard
-                    title="System Stability"
-                    value="Stable"
-                    trend="neutral"
-                    trendValue="Optimal load"
-                    icon={<CheckCircle2 className="h-5 w-5 text-green-500" />}
                 />
                 <MetricCard
                     title="Burnout Risk"
