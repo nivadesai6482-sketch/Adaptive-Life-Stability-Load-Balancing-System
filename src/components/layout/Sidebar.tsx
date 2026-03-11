@@ -1,5 +1,6 @@
 import React from 'react';
-import { Home, BarChart2, Users, Settings } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { Home, BarChart2, Users, Settings, CheckSquare } from 'lucide-react';
 
 export const Sidebar = () => {
     return (
@@ -13,16 +14,26 @@ export const Sidebar = () => {
             <nav className="flex-1 overflow-y-auto py-6">
                 <ul className="space-y-1 px-3">
                     <li>
-                        <a href="#" className="flex items-center gap-3 rounded-lg bg-blue-600 px-3 py-2 text-white transition-colors">
+                        <NavLink
+                            to="/dashboard"
+                            className={({ isActive }) =>
+                                `flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`
+                            }
+                        >
                             <Home className="h-5 w-5" />
                             <span className="font-medium">Dashboard</span>
-                        </a>
+                        </NavLink>
                     </li>
                     <li>
-                        <a href="#" className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
-                            <BarChart2 className="h-5 w-5" />
-                            <span className="font-medium">Analytics</span>
-                        </a>
+                        <NavLink
+                            to="/tasks"
+                            className={({ isActive }) =>
+                                `flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`
+                            }
+                        >
+                            <CheckSquare className="h-5 w-5" />
+                            <span className="font-medium">Tasks</span>
+                        </NavLink>
                     </li>
                     <li>
                         <a href="#" className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
