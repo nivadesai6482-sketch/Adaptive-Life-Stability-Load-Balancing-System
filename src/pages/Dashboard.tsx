@@ -7,8 +7,12 @@ import { WeakestDomainIndicator } from '../components/analytics/WeakestDomainInd
 import { DomainInputForm } from '../components/forms/DomainInputForm';
 import { Activity, Battery, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { calculateLSI } from '../utils/stabilityCalculator';
+import { useStabilityStore } from '../store/stabilityStore';
+import { CollapseRiskIndicator } from '../components/analytics/CollapseRiskIndicator';
 
 export const Dashboard = () => {
+    const { addDailyScore, historicalScores } = useStabilityStore();
+    
     // Current mock domain data
     const currentScores = {
         Time: 85,
@@ -19,6 +23,15 @@ export const Dashboard = () => {
     };
     
     const lsiScore = calculateLSI(currentScores);
+
+    // Persist daily score if not already present for today
+    React.useEffect(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const hasTodayScore = historicalScores.some(s => s.date === today);
+        if (!hasTodayScore) {
+            addDailyScore(lsiScore);
+        }
+    }, [lsiScore, historicalScores, addDailyScore]);
 
     return (
         <div className="space-y-6">
@@ -39,7 +52,7 @@ export const Dashboard = () => {
             </div>
 
             {/* Primary Metrics Grid */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <MetricCard
                     title="Life Stability Index"
                     value={lsiScore.toFixed(1)}
@@ -61,13 +74,6 @@ export const Dashboard = () => {
                     trendValue="+2 new tasks"
                     icon={<Activity className="h-5 w-5" />}
                 />
-                <MetricCard
-                    title="Burnout Risk"
-                    value="Low"
-                    trend="down"
-                    trendValue="Improved by 12%"
-                    icon={<AlertTriangle className="h-5 w-5" />}
-                />
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -76,8 +82,9 @@ export const Dashboard = () => {
                     <StabilityTrendChart />
                 </div>
 
-                {/* Radar Chart & Weakest Domain Area */}
+                {/* Radar Chart & Risk Indicators Area */}
                 <div className="flex flex-col gap-6">
+                    <CollapseRiskIndicator lsi={lsiScore} />
                     <WeakestDomainIndicator />
                     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px]">
                         <RadarChart />
