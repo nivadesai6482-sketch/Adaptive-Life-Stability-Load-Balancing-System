@@ -9,35 +9,28 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts';
-
-interface TrendData {
-    week: string;
-    stabilityIndex: number;
-}
-
-const defaultData: TrendData[] = [
-    { week: 'Week 1', stabilityIndex: 65 },
-    { week: 'Week 2', stabilityIndex: 68 },
-    { week: 'Week 3', stabilityIndex: 59 },
-    { week: 'Week 4', stabilityIndex: 72 },
-    { week: 'Week 5', stabilityIndex: 78 },
-    { week: 'Week 6', stabilityIndex: 74 },
-    { week: 'Week 7', stabilityIndex: 82 },
-];
+import { useStabilityStore } from '../../store/stabilityStore';
 
 export const StabilityTrendChart: React.FC = () => {
+    const { historicalScores } = useStabilityStore();
+
+    const chartData = historicalScores.map(score => ({
+        date: new Date(score.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        stabilityIndex: score.score
+    }));
+
     return (
         <div className="h-full w-full flex flex-col">
             <div className="mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Life Stability Trend</h3>
-                <p className="text-sm text-gray-500">Weekly aggregate of overall system stability.</p>
+                <p className="text-sm text-gray-500">Daily aggregate of overall system stability.</p>
             </div>
             <div className="h-[300px] w-full mt-4 flex-1">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={defaultData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                    <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                         <XAxis
-                            dataKey="week"
+                            dataKey="date"
                             axisLine={false}
                             tickLine={false}
                             tick={{ fill: '#6b7280', fontSize: 12 }}
