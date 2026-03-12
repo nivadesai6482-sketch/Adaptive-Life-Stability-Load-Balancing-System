@@ -55,3 +55,24 @@ export const calculateLSI = (
     // Round the final LSI to one decimal place for display purposes
     return Math.round(lsi * 10) / 10;
 };
+/**
+ * Threshold for a domain to be considered "unstable".
+ * Scores below this value indicate significant strain in that domain.
+ */
+export const STABILITY_THRESHOLD = 50;
+
+/**
+ * Calculates the categorical instability risk based on the number of unstable domains.
+ * 
+ * @param scores Current scores for each life stability domain
+ * @returns A string representing the risk level: Negligible, Low, Medium, High, or Critical
+ */
+export const calculateInstabilityRisk = (scores: DomainScores): string => {
+    const unstableDomainsCount = Object.values(scores).filter(score => score < STABILITY_THRESHOLD).length;
+
+    if (unstableDomainsCount === 0) return "Negligible";
+    if (unstableDomainsCount === 1) return "Low";
+    if (unstableDomainsCount === 2) return "Medium";
+    if (unstableDomainsCount === 3) return "High";
+    return "Critical"; // 4 or more
+};
