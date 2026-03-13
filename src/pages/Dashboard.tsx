@@ -13,6 +13,7 @@ import { RecoverySuggestions } from '../components/analytics/RecoverySuggestions
 import { StabilityHeatmap } from '../components/charts/StabilityHeatmap';
 import { DomainComparisonChart } from '../components/charts/DomainComparisonChart';
 import { WeeklyReport } from '../components/reports/WeeklyReport';
+import { SystemSummary } from '../components/analytics/SystemSummary';
 
 export const Dashboard = () => {
     const { addDailyScore, historicalScores } = useStabilityStore();
@@ -54,6 +55,8 @@ export const Dashboard = () => {
                     </button>
                 </div>
             </div>
+
+            <SystemSummary currentScores={currentScores} />
 
             {/* Primary Metrics Grid */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
