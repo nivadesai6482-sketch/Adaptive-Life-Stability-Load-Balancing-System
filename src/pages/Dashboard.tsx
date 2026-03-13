@@ -11,6 +11,7 @@ import { useStabilityStore } from '../store/stabilityStore';
 import { CollapseRiskIndicator } from '../components/analytics/CollapseRiskIndicator';
 import { RecoverySuggestions } from '../components/analytics/RecoverySuggestions';
 import { StabilityHeatmap } from '../components/charts/StabilityHeatmap';
+import { DomainComparisonChart } from '../components/charts/DomainComparisonChart';
 
 export const Dashboard = () => {
     const { addDailyScore, historicalScores } = useStabilityStore();
@@ -80,8 +81,13 @@ export const Dashboard = () => {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Analytics Area Primary */}
-                <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
-                    <StabilityTrendChart />
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
+                        <StabilityTrendChart />
+                    </div>
+                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
+                        <DomainComparisonChart scores={currentScores} />
+                    </div>
                 </div>
 
                 {/* Radar Chart & Risk Indicators Area */}
