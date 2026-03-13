@@ -9,6 +9,7 @@ import { Activity, Battery, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { calculateLSI } from '../utils/stabilityCalculator';
 import { useStabilityStore } from '../store/stabilityStore';
 import { CollapseRiskIndicator } from '../components/analytics/CollapseRiskIndicator';
+import { RecoverySuggestions } from '../components/analytics/RecoverySuggestions';
 
 export const Dashboard = () => {
     const { addDailyScore, historicalScores } = useStabilityStore();
@@ -85,6 +86,7 @@ export const Dashboard = () => {
                 {/* Radar Chart & Risk Indicators Area */}
                 <div className="flex flex-col gap-6">
                     <CollapseRiskIndicator lsi={lsiScore} />
+                    {lsiScore < 70 && <RecoverySuggestions lsi={lsiScore} />}
                     <WeakestDomainIndicator />
                     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px]">
                         <RadarChart />
