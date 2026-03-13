@@ -10,6 +10,7 @@ import { calculateLSI } from '../utils/stabilityCalculator';
 import { useStabilityStore } from '../store/stabilityStore';
 import { CollapseRiskIndicator } from '../components/analytics/CollapseRiskIndicator';
 import { RecoverySuggestions } from '../components/analytics/RecoverySuggestions';
+import { StabilityHeatmap } from '../components/charts/StabilityHeatmap';
 
 export const Dashboard = () => {
     const { addDailyScore, historicalScores } = useStabilityStore();
@@ -93,6 +94,8 @@ export const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            <StabilityHeatmap scores={currentScores} />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* System Alerts Row */}
