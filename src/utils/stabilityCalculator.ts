@@ -126,3 +126,32 @@ export const generateDomainAlerts = (scores: DomainScores): StabilityAlert[] => 
 
     return alerts;
 };
+
+/**
+ * Threshold above which the system is considered "safe" and no recovery is required.
+ */
+export const SAFE_STABILITY_THRESHOLD = 70;
+
+/**
+ * Estimates the recovery time needed based on the current Life Stability Index.
+ * 
+ * @param lsi The current Life Stability Index (0-100)
+ * @returns Estimated recovery time in hours
+ */
+export const calculateRecoveryTime = (lsi: number): number => {
+    if (lsi >= SAFE_STABILITY_THRESHOLD) {
+        return 0;
+    }
+
+    if (lsi >= 40) {
+        // Warning Zone (40-70): Scale between 4 and 24 hours
+        // (70-70)*0.67 + 4 = 4
+        // (70-40)*0.67 + 4 = 20.1 + 4 = 24.1
+        return Math.round((SAFE_STABILITY_THRESHOLD - lsi) * 0.67 + 4);
+    }
+
+    // Critical Zone (<40): Scale between 24 and 120 hours (5 days)
+    // (40-40)*2.4 + 24 = 24
+    // (40-0)*2.4 + 24 = 96 + 24 = 120
+    return Math.round((40 - lsi) * 2.4 + 24);
+};
