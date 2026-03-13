@@ -76,3 +76,53 @@ export const calculateInstabilityRisk = (scores: DomainScores): string => {
     if (unstableDomainsCount === 3) return "High";
     return "Critical"; // 4 or more
 };
+
+export interface StabilityAlert {
+    id: string;
+    domain: keyof DomainScores;
+    level: 'warning' | 'critical';
+    title: string;
+    description: string;
+}
+
+/**
+ * Thresholds for different alert levels.
+ */
+export const ALERT_THRESHOLDS = {
+    warning: 50,
+    critical: 30,
+};
+
+/**
+ * Automatically generates alerts when domain scores fall below defined thresholds.
+ * 
+ * @param scores Current scores for each life stability domain
+ * @returns An array of StabilityAlert objects
+ */
+export const generateDomainAlerts = (scores: DomainScores): StabilityAlert[] => {
+    const alerts: StabilityAlert[] = [];
+    
+    (Object.keys(scores) as (keyof DomainScores)[]).forEach(domain => {
+        const score = scores[domain];
+        
+        if (score < ALERT_THRESHOLDS.critical) {
+            alerts.push({
+                id: `crit-${domain}-${Date.now()}`,
+                domain,
+                level: 'critical',
+                title: `Critical instability in ${domain}`,
+                description: `Emergency capacity depletion detected in ${domain}. Immediate load shedding required.`
+            });
+        } else if (score < ALERT_THRESHOLDS.warning) {
+            alerts.push({
+                id: `warn-${domain}-${Date.now()}`,
+                domain,
+                level: 'warning',
+                title: `Instability warning: ${domain}`,
+                description: `${domain} capacity is below optimal threshold. Consider postponing non-essential tasks.`
+            });
+        }
+    });
+
+    return alerts;
+};
