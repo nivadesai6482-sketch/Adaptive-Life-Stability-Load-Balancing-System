@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TaskForm } from '../components/common/TaskForm';
 import { TaskList } from '../components/common/TaskList';
+import { useTaskStore } from '../store/taskStore';
 
 export const Tasks = () => {
+    const { fetchTasks } = useTaskStore();
+
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
