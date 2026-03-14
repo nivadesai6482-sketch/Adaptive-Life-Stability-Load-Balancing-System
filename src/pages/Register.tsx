@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, UserPlus } from 'lucide-react';
 import { useToast } from '../store/toastStore';
+import { API_ENDPOINTS } from '../config/apiConfig';
 
 export const Register = () => {
     const [name, setName] = useState('');
@@ -16,7 +17,7 @@ export const Register = () => {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/auth/register', {
+            const res = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password })

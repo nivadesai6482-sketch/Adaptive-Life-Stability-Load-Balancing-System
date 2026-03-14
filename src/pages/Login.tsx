@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, LogIn } from 'lucide-react';
 import { useToast } from '../store/toastStore';
+import { API_ENDPOINTS } from '../config/apiConfig';
 
 export const Login = () => {
     const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ export const Login = () => {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/auth/login', {
+            const res = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
