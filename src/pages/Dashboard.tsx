@@ -1,8 +1,6 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { MetricCard } from '../components/common/MetricCard';
-import { RadarChart } from '../components/charts/RadarChart';
-import { StabilityTrendChart } from '../components/charts/StabilityTrendChart';
-import { CollapseForecastChart } from '../components/charts/CollapseForecastChart';
+import { ChartSkeleton } from '../components/common/ChartSkeleton';
 import { NotificationPanel } from '../components/notifications/NotificationPanel';
 import { WeakestDomainIndicator } from '../components/analytics/WeakestDomainIndicator';
 import { TaskRedistributionSuggestions } from '../components/analytics/TaskRedistributionSuggestions';
@@ -12,10 +10,15 @@ import { calculateLSI } from '../utils/stabilityCalculator';
 import { useStabilityStore } from '../store/stabilityStore';
 import { CollapseRiskIndicator } from '../components/analytics/CollapseRiskIndicator';
 import { RecoverySuggestions } from '../components/analytics/RecoverySuggestions';
-import { StabilityHeatmap } from '../components/charts/StabilityHeatmap';
-import { DomainComparisonChart } from '../components/charts/DomainComparisonChart';
 import { WeeklyReport } from '../components/reports/WeeklyReport';
 import { SystemSummary } from '../components/analytics/SystemSummary';
+
+// Lazy load heavy charting components
+const RadarChart = lazy(() => import('../components/charts/RadarChart').then(module => ({ default: module.RadarChart })));
+const StabilityTrendChart = lazy(() => import('../components/charts/StabilityTrendChart').then(module => ({ default: module.StabilityTrendChart })));
+const CollapseForecastChart = lazy(() => import('../components/charts/CollapseForecastChart').then(module => ({ default: module.CollapseForecastChart })));
+const DomainComparisonChart = lazy(() => import('../components/charts/DomainComparisonChart').then(module => ({ default: module.DomainComparisonChart })));
+const StabilityHeatmap = lazy(() => import('../components/charts/StabilityHeatmap').then(module => ({ default: module.StabilityHeatmap })));
 
 export const Dashboard = () => {
     const { addDailyScore, historicalScores, fetchHistoricalScores } = useStabilityStore();
@@ -97,11 +100,19 @@ export const Dashboard = () => {
                 {/* Analytics Area Primary */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm min-h-[400px] flex items-center justify-center transition-colors duration-300">
-                        <StabilityTrendChart />
+                        <Suspense fallback={<ChartSkeleton />}>
+                            <StabilityTrendChart />
+                        </Suspense>
                     </div>
-                    <CollapseForecastChart />
+                    
+                    <Suspense fallback={<div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm min-h-[300px] flex items-center justify-center"><ChartSkeleton /></div>}>
+                        <CollapseForecastChart />
+                    </Suspense>
+                    
                     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm min-h-[400px] flex items-center justify-center transition-colors duration-300">
-                        <DomainComparisonChart scores={currentScores} />
+                        <Suspense fallback={<ChartSkeleton />}>
+                            <DomainComparisonChart scores={currentScores} />
+                        </Suspense>
                     </div>
                 </div>
 
@@ -111,12 +122,16 @@ export const Dashboard = () => {
                     {lsiScore < 70 && <RecoverySuggestions lsi={lsiScore} />}
                     <WeakestDomainIndicator />
                     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px] transition-colors duration-300">
-                        <RadarChart />
+                        <Suspense fallback={<ChartSkeleton />}>
+                            <RadarChart />
+                        </Suspense>
                     </div>
                 </div>
             </div>
 
-            <StabilityHeatmap scores={currentScores} />
+            <Suspense fallback={<div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm min-h-[300px] flex items-center justify-center"><ChartSkeleton /></div>}>
+                <StabilityHeatmap scores={currentScores} />
+            </Suspense>
 
             <WeeklyReport />
 
