@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useToast } from './toastStore';
+import { API_ENDPOINTS } from '../config/apiConfig';
 
 export interface Task {
-    id: string;
+    _id: string;
     title: string;
     priority: 'low' | 'medium' | 'high';
     deadline: string;
@@ -10,38 +12,89 @@ export interface Task {
 
 interface TaskContextType {
     tasks: Task[];
-    addTask: (task: Omit<Task, 'id' | 'status'>) => void;
-    deleteTask: (id: string) => void;
+    fetchTasks: () => Promise<void>;
+    addTask: (task: Omit<Task, '_id' | 'status'>) => Promise<void>;
+    deleteTask: (id: string) => Promise<void>;
 }
-
-const initialTasks: Task[] = [
-    { id: '1', title: 'Prepare Q3 performance review deck', priority: 'high', deadline: 'Today, 2:00 PM', status: 'in-progress' },
-    { id: '2', title: 'Review new API integration doc', priority: 'medium', deadline: 'Tomorrow, 10:00 AM', status: 'todo' },
-    { id: '3', title: 'Schedule sync with Design team', priority: 'low', deadline: 'Friday, 3:30 PM', status: 'todo' },
-    { id: '4', title: 'Submit expenses for August', priority: 'medium', deadline: 'Aug 31', status: 'completed' },
-    { id: '5', title: 'Finalize server architecture', priority: 'high', deadline: 'Today, 5:00 PM', status: 'todo' },
-];
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [tasks, setTasks] = useState<Task[]>(initialTasks);
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const { addToast } = useToast();
 
-    const addTask = (taskData: Omit<Task, 'id' | 'status'>) => {
-        const newTask: Task = {
-            ...taskData,
-            id: crypto.randomUUID(),
-            status: 'todo'
-        };
-        setTasks(prevTasks => [newTask, ...prevTasks]);
+    const fetchTasks = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(API_ENDPOINTS.TASKS.BASE, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setTasks(data);
+            } else {
+                addToast(data.message || 'Failed to fetch active tasks.', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to fetch tasks', error);
+            addToast('Network error while pulling tasks from the server.', 'error');
+        }
     };
 
-    const deleteTask = (id: string) => {
-        setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+    const addTask = async (taskData: Omit<Task, '_id' | 'status'>) => {
+        try {
+            const token = localStorage.getItem('token');
+            const payload = { ...taskData, status: 'todo' };
+            const res = await fetch(API_ENDPOINTS.TASKS.BASE, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setTasks(prevTasks => [data, ...prevTasks]);
+                addToast('Task successfully orchestrated.', 'success');
+            } else {
+                addToast(data.message || 'Failed to submit new task.', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to add task', error);
+            addToast('Network drop while dispatching task.', 'error');
+        }
     };
+
+    const deleteTask = async (id: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(API_ENDPOINTS.TASKS.BY_ID(id), { 
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                } 
+            });
+            if (res.ok) {
+                setTasks(prevTasks => prevTasks.filter(task => task._id !== id));
+                addToast('Task effectively purged.', 'info');
+            } else {
+                const data = await res.json();
+                addToast(data.message || 'Deletion command rejected by server.', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to delete task', error);
+            addToast('Server unreachable during deletion signal.', 'error');
+        }
+    };
+
+    // Note: We leave immediate fetching out of this effect so the components can decide
+    // or we could fetch automatically on mount. We'll do it manually inside Layout or Dashboard.
 
     return (
-        <TaskContext.Provider value={{ tasks, addTask, deleteTask }}>
+        <TaskContext.Provider value={{ tasks, fetchTasks, addTask, deleteTask }}>
             {children}
         </TaskContext.Provider>
     );
