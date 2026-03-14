@@ -5,6 +5,7 @@ import { StabilityTrendChart } from '../components/charts/StabilityTrendChart';
 import { CollapseForecastChart } from '../components/charts/CollapseForecastChart';
 import { NotificationPanel } from '../components/notifications/NotificationPanel';
 import { WeakestDomainIndicator } from '../components/analytics/WeakestDomainIndicator';
+import { TaskRedistributionSuggestions } from '../components/analytics/TaskRedistributionSuggestions';
 import { DomainInputForm } from '../components/forms/DomainInputForm';
 import { Activity, Battery, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { calculateLSI } from '../utils/stabilityCalculator';
@@ -60,6 +61,9 @@ export const Dashboard = () => {
                     </button>
                 </div>
             </div>
+
+            {/* AI Load Balancing Redirection System */}
+            <TaskRedistributionSuggestions />
 
             <SystemSummary currentScores={currentScores} />
 
