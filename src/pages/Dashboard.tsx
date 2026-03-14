@@ -2,6 +2,7 @@ import React from 'react';
 import { MetricCard } from '../components/common/MetricCard';
 import { RadarChart } from '../components/charts/RadarChart';
 import { StabilityTrendChart } from '../components/charts/StabilityTrendChart';
+import { CollapseForecastChart } from '../components/charts/CollapseForecastChart';
 import { NotificationPanel } from '../components/notifications/NotificationPanel';
 import { WeakestDomainIndicator } from '../components/analytics/WeakestDomainIndicator';
 import { DomainInputForm } from '../components/forms/DomainInputForm';
@@ -16,8 +17,12 @@ import { WeeklyReport } from '../components/reports/WeeklyReport';
 import { SystemSummary } from '../components/analytics/SystemSummary';
 
 export const Dashboard = () => {
-    const { addDailyScore, historicalScores } = useStabilityStore();
+    const { addDailyScore, historicalScores, fetchHistoricalScores } = useStabilityStore();
     
+    React.useEffect(() => {
+        fetchHistoricalScores();
+    }, [fetchHistoricalScores]);
+
     // Current mock domain data
     const currentScores = {
         Time: 85,
@@ -89,6 +94,7 @@ export const Dashboard = () => {
                     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
                         <StabilityTrendChart />
                     </div>
+                    <CollapseForecastChart />
                     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
                         <DomainComparisonChart scores={currentScores} />
                     </div>
