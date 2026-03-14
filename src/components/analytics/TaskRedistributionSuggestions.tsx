@@ -4,7 +4,7 @@ import { useTaskStore } from '../../store/taskStore';
 import { useStabilityStore } from '../../store/stabilityStore';
 import { balanceLoad, BalancedTask } from '../../utils/loadBalancer';
 
-export const TaskRedistributionSuggestions = () => {
+export const TaskRedistributionSuggestions = React.memo(() => {
     const { tasks } = useTaskStore();
     const { historicalScores } = useStabilityStore();
 
@@ -50,57 +50,58 @@ export const TaskRedistributionSuggestions = () => {
     });
 
     return (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 shadow-sm mb-6 animate-fade-in">
-            <div className="flex items-start mb-4">
-                <AlertCircle className="h-6 w-6 text-red-600 mr-3 shrink-0 mt-0.5" />
+        <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-2xl p-6 shadow-sm mb-8 animate-fade-in transition-all duration-300">
+            <div className="flex items-start mb-6 border-b border-red-100/50 dark:border-red-900/30 pb-4">
+                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-xl mr-4 text-red-600 dark:text-red-500 shadow-sm">
+                    <AlertCircle className="h-6 w-6" />
+                </div>
                 <div>
-                    <h3 className="text-lg font-bold text-red-900">System Overload Warning</h3>
-                    <p className="text-sm text-red-700 mt-1">
-                        Your Life Stability Index is currently at <strong>{latestScore}</strong>. 
-                        To prevent structural collapse, the Load Balancer strongly recommends shedding the following active commitments immediately:
+                    <h3 className="text-lg font-black text-red-900 dark:text-red-400 tracking-tight">System Overload Warning</h3>
+                    <p className="text-xs font-bold text-red-700/80 dark:text-red-300/80 mt-0.5 uppercase tracking-wider">
+                        Stability Index: <span className="text-red-600 dark:text-red-400">{latestScore}</span> — Immediate action recommended
                     </p>
                 </div>
             </div>
 
-            <div className="space-y-3 mt-4 ml-9">
+            <div className="space-y-4">
                 {sortedSuggestions.map((task: BalancedTask) => (
                     <div 
                         key={task._id} 
-                        className="bg-white rounded-lg p-4 border border-red-100 flex items-start justify-between shadow-sm"
+                        className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-4 border border-red-100/50 dark:border-gray-700/50 flex items-start justify-between shadow-sm transition-all duration-300 hover:shadow-md hover:border-red-200 dark:hover:border-red-500/30 group"
                     >
                         <div className="flex-1">
                             <div className="flex items-center gap-2">
                                 {/* Action specific iconography */}
                                 {task.suggestedAction === 'drop' ? (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
-                                        <XCircle className="h-3.5 w-3.5" /> DROP
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-red-600 text-white dark:bg-red-900/80 dark:text-red-200 shadow-sm uppercase tracking-wider">
+                                        <XCircle className="h-3 w-3" /> DROP
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800">
-                                        <ArrowRightCircle className="h-3.5 w-3.5" /> DEFER
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-white dark:bg-amber-900/80 dark:text-amber-200 shadow-sm uppercase tracking-wider">
+                                        <ArrowRightCircle className="h-3 w-3" /> DEFER
                                     </span>
                                 )}
                                 
-                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
-                                    task.priority === 'high' ? 'bg-red-50 text-red-600' :
-                                    task.priority === 'medium' ? 'bg-yellow-50 text-yellow-600' :
-                                    'bg-blue-50 text-blue-600'
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border shadow-sm uppercase tracking-wider ${
+                                    task.priority === 'high' ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800' :
+                                    task.priority === 'medium' ? 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800' :
+                                    'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800'
                                 }`}>
-                                    {task.priority.toUpperCase()}
+                                    {task.priority}
                                 </span>
                             </div>
                             
-                            <h4 className="font-semibold text-gray-900 mt-2 text-sm md:text-base">
+                            <h4 className="font-black text-gray-900 dark:text-white mt-3 text-sm tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                 {task.title}
                             </h4>
-                            <p className="text-xs text-gray-500 mt-1">
-                                {task.reason}
+                            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-0.5 max-w-2xl italic">
+                                "{task.reason}"
                             </p>
                         </div>
 
                         <div className="text-right ml-4 shrink-0">
-                            <span className="text-xs font-medium text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
-                                Due: {task.deadline}
+                            <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 whitespace-nowrap bg-gray-50/50 dark:bg-gray-800/50 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-gray-700/50 block shadow-inner">
+                                DUE: {task.deadline}
                             </span>
                         </div>
                     </div>
@@ -108,4 +109,4 @@ export const TaskRedistributionSuggestions = () => {
             </div>
         </div>
     );
-};
+});

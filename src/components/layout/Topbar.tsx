@@ -1,11 +1,21 @@
 import React from 'react';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, Menu } from 'lucide-react';
 
-export const Topbar = () => {
+interface TopbarProps {
+    onMenuClick: () => void;
+}
+
+export const Topbar = ({ onMenuClick }: TopbarProps) => {
     return (
-        <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 shadow-sm transition-colors duration-300">
-            <div className="flex flex-1 items-center">
-                <div className="relative w-full max-w-md">
+        <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 sm:px-6 shadow-sm transition-colors duration-300">
+            <div className="flex flex-1 items-center gap-4">
+                <button 
+                    onClick={onMenuClick}
+                    className="md:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <Menu className="h-6 w-6" />
+                </button>
+                <div className="relative w-full max-w-md hidden sm:block">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <Search className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     </div>
@@ -16,7 +26,7 @@ export const Topbar = () => {
                     />
                 </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 shrink-0">
                 <button type="button" className="relative rounded-full p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
                     <span className="sr-only">View notifications</span>
                     <Bell className="h-6 w-6" aria-hidden="true" />

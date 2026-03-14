@@ -56,7 +56,7 @@ export const TaskList = () => {
                             const StatusIcon = statusConfig[task.status].icon;
 
                             return (
-                                <tr key={task.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={task._id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="text-sm font-medium text-gray-900">{task.title}</div>
@@ -81,7 +81,7 @@ export const TaskList = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button
-                                            onClick={() => deleteTask(task.id)}
+                                            onClick={() => deleteTask(task._id)}
                                             className="inline-flex items-center justify-center rounded-md p-2 text-red-400 hover:bg-red-50 hover:text-red-700 transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none"
                                             title="Delete Task"
                                         >
