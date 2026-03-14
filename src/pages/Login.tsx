@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, LogIn } from 'lucide-react';
+import { useToast } from '../store/toastStore';
 
 export const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { addToast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
 
         try {
             const res = await fetch('/api/auth/login', {
@@ -27,12 +27,13 @@ export const Login = () => {
                 // Store token and user data (simplified for now, ideally use a context/store)
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data));
+                addToast('Authentication successful.', 'success');
                 navigate('/');
             } else {
-                setError(data.message || 'Login failed');
+                addToast(data.message || 'Authentication failed. Please check your credentials.', 'error');
             }
         } catch (err) {
-            setError('An error occurred. Please try again.');
+            addToast('Network error while securely connecting to the server.', 'error');
         } finally {
             setLoading(false);
         }
@@ -55,11 +56,6 @@ export const Login = () => {
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <div className="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                        {error && (
-                            <div className="rounded-md bg-red-50 p-4">
-                                <div className="text-sm text-red-700">{error}</div>
-                            </div>
-                        )}
                         
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">

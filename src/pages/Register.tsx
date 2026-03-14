@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, UserPlus } from 'lucide-react';
+import { useToast } from '../store/toastStore';
 
 export const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { addToast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
 
         try {
             const res = await fetch('/api/auth/register', {
@@ -28,12 +28,13 @@ export const Register = () => {
                 // Store token and redirect
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data));
+                addToast('Registration successful! Welcome.', 'success');
                 navigate('/');
             } else {
-                setError(data.message || 'Registration failed');
+                addToast(data.message || 'Registration failed. Email might be in use.', 'error');
             }
         } catch (err) {
-            setError('An error occurred. Please try again.');
+            addToast('Network error while constructing your account.', 'error');
         } finally {
             setLoading(false);
         }
@@ -56,12 +57,6 @@ export const Register = () => {
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <div className="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                        {error && (
-                            <div className="rounded-md bg-red-50 p-4">
-                                <div className="text-sm text-red-700">{error}</div>
-                            </div>
-                        )}
-
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
                                 Full Name
