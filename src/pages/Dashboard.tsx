@@ -25,10 +25,11 @@ export const Dashboard = () => {
     }, [fetchHistoricalScores]);
 
     // Current mock domain data
+    // Setting Cognitive to 40 to actively demonstrate the warning alert
     const currentScores = {
         Time: 85,
         Energy: 60,
-        Cognitive: 90,
+        Cognitive: 40,
         Emotional: 75,
         Financial: 80,
     };
@@ -48,10 +49,10 @@ export const Dashboard = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                    <h2 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight transition-colors">
                         ALS-LBS Dashboard
                     </h2>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 transition-colors">
                         Real-time life stability and load balancing metrics.
                     </p>
                 </div>
@@ -95,11 +96,11 @@ export const Dashboard = () => {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Analytics Area Primary */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm min-h-[400px] flex items-center justify-center transition-colors duration-300">
                         <StabilityTrendChart />
                     </div>
                     <CollapseForecastChart />
-                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px] flex items-center justify-center">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm min-h-[400px] flex items-center justify-center transition-colors duration-300">
                         <DomainComparisonChart scores={currentScores} />
                     </div>
                 </div>
@@ -109,7 +110,7 @@ export const Dashboard = () => {
                     <CollapseRiskIndicator lsi={lsiScore} />
                     {lsiScore < 70 && <RecoverySuggestions lsi={lsiScore} />}
                     <WeakestDomainIndicator />
-                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px]">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px] transition-colors duration-300">
                         <RadarChart />
                     </div>
                 </div>
@@ -121,12 +122,12 @@ export const Dashboard = () => {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* System Alerts Row */}
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[300px] max-h-[400px]">
-                    <NotificationPanel />
+                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm min-h-[300px] max-h-[400px] transition-colors duration-300">
+                    <NotificationPanel lsiScore={lsiScore} domainScores={currentScores} />
                 </div>
                 
                 {/* Domain Input Form */}
-                <div className="rounded-xl shadow-sm min-h-[300px] max-h-[400px]">
+                <div className="rounded-xl shadow-sm min-h-[300px] max-h-[400px] bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 transition-colors duration-300">
                     <DomainInputForm />
                 </div>
             </div>
