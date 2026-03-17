@@ -1,80 +1,106 @@
 import { DailyStabilityScore } from '../store/stabilityStore';
 
+export type TrendDirection = 'increasing' | 'decreasing' | 'stable';
+
+export interface StabilityPrediction {
+    predictedValues: number[];
+    trend: TrendDirection;
+    slope: number;
+}
+
 /**
- * Calculates a simple linear regression (line of best fit) and returns
- * new daily predictive scores for the requested number of future days.
+ * Predicts next 5 stability values and determines the trend direction.
+ * Uses simple linear regression (Least Squares Method).
+ * 
+ * @param scores Array of numerical stability scores or DailyStabilityScore objects
+ * @returns Prediction object containing forecasted values and trend direction
  */
-export const predictFutureStability = (
-    historicalScores: DailyStabilityScore[],
-    daysToPredict: number = 7
-): DailyStabilityScore[] => {
-    
-    // Cannot project without at least 2 data points
-    if (historicalScores.length < 2) {
-        return [];
+export const predictStabilityTrend = (
+    scores: number[] | DailyStabilityScore[]
+): StabilityPrediction => {
+    // Normalize input to number[]
+    const data: number[] = scores.length > 0 && typeof scores[0] === 'object'
+        ? (scores as DailyStabilityScore[]).map(s => s.score)
+        : (scores as number[]);
+
+    if (data.length < 2) {
+        return {
+            predictedValues: new Array(5).fill(data[0] || 0),
+            trend: 'stable',
+            slope: 0
+        };
     }
 
-    // Ensure we are working with sorted dates ascending
-    const sortedScores = [...historicalScores].sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-
-    const n = sortedScores.length;
+    const n = data.length;
     let sumX = 0;
     let sumY = 0;
     let sumXY = 0;
     let sumX2 = 0;
 
-    // Use zero-based numeric representation for 'x' to avoid massive timestamp values in the regression formula
-    sortedScores.forEach((entry, i) => {
-        const x = i;
-        const y = entry.score;
+    data.forEach((y, x) => {
         sumX += x;
         sumY += y;
         sumXY += x * y;
         sumX2 += x * x;
     });
 
-    // Formula for slope (m) and intercept (b):
-    // m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX^2)
-    // b = (sumY - m * sumX) / n
     const denominator = (n * sumX2 - sumX * sumX);
-    
-    // If the denominator is 0, the points are a perfectly vertical line (impossible with day index)
     if (denominator === 0) {
-        return [];
+        return {
+            predictedValues: new Array(5).fill(data[n - 1]),
+            trend: 'stable',
+            slope: 0
+        };
     }
 
     const m = (n * sumXY - sumX * sumY) / denominator;
     const b = (sumY - m * sumX) / n;
 
-    // We start predicting from the index AFTER our last known historical point
-    const startIdx = n;
-    
-    // Calculate the actual Date object of the last entry to properly stringify future dates
-    const lastDateEntry = new Date(sortedScores[n - 1].date);
-    
-    const predictions: DailyStabilityScore[] = [];
+    // Forecast next 5 values
+    const predictedValues: number[] = [];
+    for (let i = 0; i < 5; i++) {
+        const targetX = n + i;
+        let predicted = Number(((m * targetX) + b).toFixed(1));
 
-    for (let i = 0; i < daysToPredict; i++) {
-        const targetX = startIdx + i;
-        
-        // Calculate y = mx + b
-        let predictedScore = Math.round((m * targetX) + b);
-        
-        // Clamp to sensible boundaries
-        if (predictedScore > 100) predictedScore = 100;
-        if (predictedScore < 0) predictedScore = 0;
-
-        // Calculate logical next date (add 'i + 1' days to the last historical date)
-        const nextDate = new Date(lastDateEntry);
-        nextDate.setDate(nextDate.getDate() + (i + 1));
-        
-        predictions.push({
-            date: nextDate.toISOString().split('T')[0],
-            score: predictedScore
-        });
+        // Clamp 0-100
+        predicted = Math.max(0, Math.min(100, predicted));
+        predictedValues.push(predicted);
     }
 
-    return predictions;
+    // Determine trend direction
+    // Threshold of 0.5 per step for a "clear" trend
+    let trend: TrendDirection = 'stable';
+    if (m > 0.5) {
+        trend = 'increasing';
+    } else if (m < -0.5) {
+        trend = 'decreasing';
+    }
+
+    return {
+        predictedValues,
+        trend,
+        slope: Number(m.toFixed(3))
+    };
+};
+
+/**
+ * Legacy support for existing consumers if any.
+ */
+export const predictFutureStability = (
+    historicalScores: DailyStabilityScore[],
+    daysToPredict: number = 7
+): DailyStabilityScore[] => {
+    const result = predictStabilityTrend(historicalScores);
+    const lastDate = historicalScores.length > 0
+        ? new Date(historicalScores[historicalScores.length - 1].date)
+        : new Date();
+
+    return result.predictedValues.map((score, i) => {
+        const date = new Date(lastDate);
+        date.setDate(date.getDate() + (i + 1));
+        return {
+            date: date.toISOString().split('T')[0],
+            score
+        };
+    });
 };
