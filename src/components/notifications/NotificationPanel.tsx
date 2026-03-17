@@ -12,13 +12,16 @@ export interface NotificationProps {
     timestamp: string;
 }
 
+import { BurnoutRiskLevel } from '../../utils/burnoutPredictor';
+
 interface NotificationPanelProps {
     lsiScore: number;
     domainScores: {
         Energy: number;
         Cognitive: number;
         [key: string]: number;
-    }
+    };
+    burnoutRisk?: BurnoutRiskLevel;
 }
 
 const severityConfig = {
@@ -40,7 +43,7 @@ const severityConfig = {
 };
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({ lsiScore, domainScores }) => {
-    
+
     // Dynamically generate alerts based on live metrics
     const notifications = useMemo(() => {
         const alerts: NotificationProps[] = [];
@@ -91,16 +94,15 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ lsiScore, 
                     <h3 className="text-lg font-medium text-gray-900">System Alerts</h3>
                     <p className="text-sm text-gray-500">Real-time telemetry and state monitoring.</p>
                 </div>
-                
+
                 {/* Dynamic Badge */}
                 {notifications.length > 0 && (
-                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                        criticalCount > 0 
-                            ? 'bg-red-50 text-red-700 ring-red-600/10' 
+                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${criticalCount > 0
+                            ? 'bg-red-50 text-red-700 ring-red-600/10'
                             : 'bg-amber-50 text-amber-700 ring-amber-600/10'
-                    }`}>
-                        {criticalCount > 0 
-                            ? `${criticalCount} Critical` 
+                        }`}>
+                        {criticalCount > 0
+                            ? `${criticalCount} Critical`
                             : `${warningCount} Warning`}
                     </span>
                 )}
