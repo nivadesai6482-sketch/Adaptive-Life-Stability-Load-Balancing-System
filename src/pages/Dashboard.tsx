@@ -12,6 +12,8 @@ import { CollapseRiskIndicator } from '../components/analytics/CollapseRiskIndic
 import { RecoverySuggestions } from '../components/analytics/RecoverySuggestions';
 import { WeeklyReport } from '../components/reports/WeeklyReport';
 import { SystemSummary } from '../components/analytics/SystemSummary';
+import { HealthTelemetryCard } from '../components/common/HealthTelemetryCard';
+import { Smartphone, RefreshCw } from 'lucide-react';
 
 // Lazy load heavy charting components
 const RadarChart = lazy(() => import('../components/charts/RadarChart').then(module => ({ default: module.RadarChart })));
@@ -21,32 +23,43 @@ const DomainComparisonChart = lazy(() => import('../components/charts/DomainComp
 const StabilityHeatmap = lazy(() => import('../components/charts/StabilityHeatmap').then(module => ({ default: module.StabilityHeatmap })));
 
 export const Dashboard = () => {
-    const { addDailyScore, historicalScores, fetchHistoricalScores } = useStabilityStore();
-    
+    console.log('Dashboard Rendering...');
+    const {
+        addDailyScore,
+        historicalScores,
+        fetchHistoricalScores,
+        currentScores,
+        isDeviceConnected,
+        isConnecting,
+        healthData,
+        connectDevice,
+        disconnectDevice
+    } = useStabilityStore();
+
     React.useEffect(() => {
         fetchHistoricalScores();
     }, [fetchHistoricalScores]);
 
-    // Current mock domain data
-    // Setting Cognitive to 40 to actively demonstrate the warning alert
-    const currentScores = {
-        Time: 85,
-        Energy: 60,
-        Cognitive: 40,
-        Emotional: 75,
-        Financial: 80,
-    };
-    
     const lsiScore = calculateLSI(currentScores);
 
     // Persist daily score if not already present for today
+    // We use a separate state to avoid immediate re-checks that might cause loops
+    const [hasAttemptedDailySave, setHasAttemptedDailySave] = React.useState(false);
+
     React.useEffect(() => {
+        if (!historicalScores || historicalScores.length === 0 && !hasAttemptedDailySave) {
+            // If historicalScores is empty, wait for fetch or if after fetch still empty, proceed
+            return;
+        }
+
         const today = new Date().toISOString().split('T')[0];
         const hasTodayScore = historicalScores.some(s => s.date === today);
-        if (!hasTodayScore) {
-            addDailyScore(lsiScore);
+
+        if (!hasTodayScore && !hasAttemptedDailySave) {
+            setHasAttemptedDailySave(true);
+            addDailyScore(currentScores);
         }
-    }, [lsiScore, historicalScores, addDailyScore]);
+    }, [currentScores, historicalScores, addDailyScore, hasAttemptedDailySave]);
 
     return (
         <div className="space-y-8 pb-10">
@@ -65,7 +78,23 @@ export const Dashboard = () => {
                         </p>
                     </div>
                 </div>
-                <div className="flex">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => isDeviceConnected ? disconnectDevice() : connectDevice()}
+                        disabled={isConnecting}
+                        type="button"
+                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition-all active:scale-95 ${isDeviceConnected
+                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
+                                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                            }`}
+                    >
+                        {isConnecting ? (
+                            <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                        ) : (
+                            <Smartphone className={`h-4 w-4 ${isDeviceConnected ? 'text-emerald-600' : 'text-gray-400'}`} />
+                        )}
+                        {isConnecting ? 'Bridging...' : isDeviceConnected ? 'Device: Connected' : 'Connect Health Device'}
+                    </button>
                     <button type="button" className="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-95">
                         Run Capacity Assessment
                     </button>
@@ -88,7 +117,7 @@ export const Dashboard = () => {
                         <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Real-time vital indicators</p>
                     </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <MetricCard
                         title="Life Stability Index"
@@ -134,11 +163,11 @@ export const Dashboard = () => {
                                 <StabilityTrendChart />
                             </Suspense>
                         </div>
-                        
+
                         <Suspense fallback={<div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[300px] flex items-center justify-center"><ChartSkeleton /></div>}>
                             <CollapseForecastChart />
                         </Suspense>
-                        
+
                         <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[400px] flex items-center justify-center transition-all duration-300 hover:shadow-md backdrop-blur-sm">
                             <Suspense fallback={<ChartSkeleton />}>
                                 <DomainComparisonChart scores={currentScores} />
@@ -196,7 +225,7 @@ export const Dashboard = () => {
                     <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[300px] max-h-[400px] transition-all duration-300 hover:shadow-md overflow-hidden backdrop-blur-sm">
                         <NotificationPanel lsiScore={lsiScore} domainScores={currentScores} />
                     </div>
-                    
+
                     {/* Domain Input Form */}
                     <div className="rounded-2xl shadow-sm min-h-[300px] max-h-[400px] bg-white dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 transition-all duration-300 hover:shadow-md overflow-hidden backdrop-blur-sm">
                         <DomainInputForm />
