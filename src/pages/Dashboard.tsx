@@ -14,6 +14,8 @@ import { WeeklyReport } from '../components/reports/WeeklyReport';
 import { SystemSummary } from '../components/analytics/SystemSummary';
 import { HealthTelemetryCard } from '../components/common/HealthTelemetryCard';
 import { Smartphone, RefreshCw } from 'lucide-react';
+import { getHealthData, HealthData } from '../services/health/fitbitService';
+import { calculateEnergyScore, calculateStressLevel, EnergyLevel, StressLevel } from '../services/health/healthAnalyzer';
 
 // Lazy load heavy charting components
 const RadarChart = lazy(() => import('../components/charts/RadarChart').then(module => ({ default: module.RadarChart })));
@@ -39,6 +41,23 @@ export const Dashboard = () => {
     React.useEffect(() => {
         fetchHistoricalScores();
     }, [fetchHistoricalScores]);
+
+    const [healthAnalysis, setHealthAnalysis] = React.useState<{
+        energy: EnergyLevel;
+        stress: StressLevel;
+    } | null>(null);
+
+    const handleConnectDevice = async () => {
+        try {
+            await connectDevice();
+            const data = await getHealthData();
+            const energy = calculateEnergyScore(data.sleepHours, data.activityLevel);
+            const stress = calculateStressLevel(data.heartRate);
+            setHealthAnalysis({ energy, stress });
+        } catch (error) {
+            console.error('Connection failed', error);
+        }
+    };
 
     const lsiScore = calculateLSI(currentScores);
 
@@ -79,22 +98,30 @@ export const Dashboard = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => isDeviceConnected ? disconnectDevice() : connectDevice()}
-                        disabled={isConnecting}
-                        type="button"
-                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition-all active:scale-95 ${isDeviceConnected
-                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
-                                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
-                            }`}
-                    >
-                        {isConnecting ? (
-                            <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
-                        ) : (
-                            <Smartphone className={`h-4 w-4 ${isDeviceConnected ? 'text-emerald-600' : 'text-gray-400'}`} />
+                    <div className="flex flex-col items-end">
+                        <button
+                            onClick={handleConnectDevice}
+                            disabled={isConnecting}
+                            type="button"
+                            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition-all active:scale-95 ${isDeviceConnected
+                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
+                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                                }`}
+                        >
+                            {isConnecting ? (
+                                <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                            ) : (
+                                <Smartphone className={`h-4 w-4 ${isDeviceConnected ? 'text-emerald-600' : 'text-gray-400'}`} />
+                            )}
+                            {isConnecting ? 'Bridging...' : isDeviceConnected ? 'Device: Connected' : 'Connect Health Device'}
+                        </button>
+                        {healthAnalysis && isDeviceConnected && (
+                            <div className="mt-1 flex gap-2">
+                                <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-50 px-1.5 py-0.5 rounded">Energy: {healthAnalysis.energy}</span>
+                                <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${healthAnalysis.stress === 'high' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>Stress: {healthAnalysis.stress}</span>
+                            </div>
                         )}
-                        {isConnecting ? 'Bridging...' : isDeviceConnected ? 'Device: Connected' : 'Connect Health Device'}
-                    </button>
+                    </div>
                     <button type="button" className="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-95">
                         Run Capacity Assessment
                     </button>
