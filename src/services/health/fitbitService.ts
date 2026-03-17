@@ -1,41 +1,40 @@
+export type ActivityLevel = 'low' | 'medium' | 'high';
+
 export interface HealthData {
     heartRate: number;
     sleepHours: number;
-    activityLevel: number; // 0-100
+    activityLevel: ActivityLevel;
     steps: number;
     lastSync: string;
 }
 
+export const getHealthData = async (): Promise<HealthData> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const activityLevels: ActivityLevel[] = ['low', 'medium', 'high'];
+
+    return {
+        heartRate: Math.floor(Math.random() * (110 - 60 + 1)) + 60,
+        sleepHours: Number((Math.random() * (9.0 - 4.0) + 4.0).toFixed(1)),
+        activityLevel: activityLevels[Math.floor(Math.random() * activityLevels.length)],
+        steps: Math.floor(Math.random() * 10000),
+        lastSync: new Date().toISOString(),
+    };
+};
+
 export const fitbitService = {
     connect: async (): Promise<boolean> => {
-        // Simulate OAuth / Connection delay
         return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(true);
-            }, 2000);
+            setTimeout(() => resolve(true), 1500);
         });
     },
 
-    fetchData: async (): Promise<HealthData> => {
-        // Simulate API call delay
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    heartRate: Math.floor(Math.random() * (85 - 60 + 1)) + 60,
-                    sleepHours: Number((Math.random() * (8.5 - 6.0) + 6.0).toFixed(1)),
-                    activityLevel: Math.floor(Math.random() * 100),
-                    steps: Math.floor(Math.random() * 12000),
-                    lastSync: new Date().toISOString(),
-                });
-            }, 1500);
-        });
-    },
+    fetchData: getHealthData,
 
     disconnect: async (): Promise<boolean> => {
         return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(true);
-            }, 500);
+            setTimeout(() => resolve(true), 500);
         });
     }
 };
