@@ -2,11 +2,50 @@ import { DailyStabilityScore } from '../store/stabilityStore';
 
 export type TrendDirection = 'increasing' | 'decreasing' | 'stable';
 
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
 export interface StabilityPrediction {
     predictedValues: number[];
     trend: TrendDirection;
     slope: number;
+    collapseWindow?: {
+        daysUntilCollapse: number | null;
+        riskLevel: RiskLevel;
+    };
 }
+
+/**
+ * Estimates the collapse time window based on predicted stability values.
+ * Threshold for collapse is 40.
+ * 
+ * @param predictedValues Array of forecasted stability values
+ * @returns Object with days until collapse and risk level
+ */
+export const estimateCollapseWindow = (predictedValues: number[]) => {
+    const threshold = 40;
+    const breachIndex = predictedValues.findIndex(v => v < threshold);
+
+    if (breachIndex === -1) {
+        return {
+            daysUntilCollapse: null,
+            riskLevel: 'LOW' as RiskLevel
+        };
+    }
+
+    const days = breachIndex + 1; // 1-indexed days from "today"
+
+    let riskLevel: RiskLevel = 'LOW';
+    if (days <= 2) {
+        riskLevel = 'HIGH';
+    } else if (days <= 5) {
+        riskLevel = 'MEDIUM';
+    }
+
+    return {
+        daysUntilCollapse: days,
+        riskLevel
+    };
+};
 
 /**
  * Predicts next 5 stability values and determines the trend direction.
@@ -79,7 +118,8 @@ export const predictStabilityTrend = (
     return {
         predictedValues,
         trend,
-        slope: Number(m.toFixed(3))
+        slope: Number(m.toFixed(3)),
+        collapseWindow: estimateCollapseWindow(predictedValues)
     };
 };
 
