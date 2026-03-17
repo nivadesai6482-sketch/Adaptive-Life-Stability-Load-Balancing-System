@@ -98,14 +98,23 @@ export const Dashboard = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    {isDeviceConnected && healthData && (
+                        <HealthTelemetryCard
+                            data={healthData}
+                            energy={healthAnalysis?.energy}
+                            stress={healthAnalysis?.stress}
+                            isSyncing={isConnecting}
+                            onRefresh={handleConnectDevice}
+                        />
+                    )}
                     <div className="flex flex-col items-end">
                         <button
                             onClick={handleConnectDevice}
                             disabled={isConnecting}
                             type="button"
                             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition-all active:scale-95 ${isDeviceConnected
-                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
-                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
+                                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
                                 }`}
                         >
                             {isConnecting ? (
