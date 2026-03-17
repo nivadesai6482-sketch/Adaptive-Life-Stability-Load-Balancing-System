@@ -43,21 +43,41 @@ export const DOMAIN_ACTION_MAP: Record<keyof DomainScores, string> = {
 };
 
 /**
- * Generates targeted recommendations based on the weakest life stability domain.
+ * Generates targeted recommendations based on weakest domains and burnout risk.
  * 
  * @param scores Current scores for each life stability domain
+ * @param burnoutRisk Optional categorical risk level
  * @returns An array of string recommendations
  */
-export const getRecommendations = (scores: DomainScores): string[] => {
-    // Identify the domain with the minimum score
+export const getRecommendations = (
+    scores: DomainScores,
+    burnoutRisk: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW'
+): string[] => {
+    // Priority 1: Burnout Mitigation
+    if (burnoutRisk === 'HIGH') {
+        return [
+            "CRITICAL: Immediate 50% reduction in elective cognitive commitments",
+            "MANDATORY REST: Minimum 8 hours of sleep required for biological reset",
+            "LOAD SHEDDING: Delay all deadlines by 48-72 hours until stability recovers"
+        ];
+    }
+
+    // Priority 2: Domain-specific recovery
     const entries = Object.entries(scores) as [keyof DomainScores, number][];
-    const weakestEntry = entries.reduce((min, current) => 
+    const weakestEntry = entries.reduce((min, current) =>
         current[1] < min[1] ? current : min
-    , entries[0]);
+        , entries[0]);
 
     const weakestDomain = weakestEntry[0];
-    
-    return RECOMMENDATION_MAP[weakestDomain] || [];
+
+    // Add medium burnout context if applicable
+    const baseRecommendations = RECOMMENDATION_MAP[weakestDomain] || [];
+
+    if (burnoutRisk === 'MEDIUM') {
+        return ["Warning: Burnout buffer is thin. " + baseRecommendations[0], ...baseRecommendations.slice(1)];
+    }
+
+    return baseRecommendations;
 };
 
 /**
