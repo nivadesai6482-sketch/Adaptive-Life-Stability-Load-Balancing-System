@@ -16,6 +16,9 @@ import { HealthTelemetryCard } from '../components/common/HealthTelemetryCard';
 import { Smartphone, RefreshCw } from 'lucide-react';
 import { getHealthData, HealthData } from '../services/health/fitbitService';
 import { calculateEnergyScore, calculateStressLevel, EnergyLevel, StressLevel } from '../services/health/healthAnalyzer';
+import { BurnoutIndicator } from '../components/analytics/BurnoutIndicator';
+import { predictBurnoutRisk } from '../utils/burnoutPredictor';
+import { useTaskStore } from '../store/taskStore';
 
 // Lazy load heavy charting components
 const RadarChart = lazy(() => import('../components/charts/RadarChart').then(module => ({ default: module.RadarChart })));
@@ -141,6 +144,13 @@ export const Dashboard = () => {
             <TaskRedistributionSuggestions />
 
             <SystemSummary currentScores={currentScores} />
+
+            {/* Burnout Monitoring */}
+            {isDeviceConnected && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <BurnoutIndicator risk={burnoutRisk} />
+                </div>
+            )}
 
             {/* SECTION: Core Metrics */}
             <div className="space-y-4">
