@@ -42,11 +42,22 @@ const severityConfig = {
     }
 };
 
-export const NotificationPanel: React.FC<NotificationPanelProps> = ({ lsiScore, domainScores }) => {
+export const NotificationPanel: React.FC<NotificationPanelProps> = ({ lsiScore, domainScores, burnoutRisk }) => {
 
     // Dynamically generate alerts based on live metrics
     const notifications = useMemo(() => {
         const alerts: NotificationProps[] = [];
+
+        if (burnoutRisk === 'HIGH') {
+            alerts.push({
+                id: 'burnout-high-risk',
+                title: 'Burnout Risk: HIGH',
+                description: 'High burnout risk detected. Multi-domain capacity depletion is imminent. Please initiate cognitive load balancing protocol.',
+                severity: 'critical',
+                icon: <AlertCircle className="h-5 w-5" />,
+                timestamp: 'Just now'
+            });
+        }
 
         if (lsiScore < 60) {
             alerts.push({
@@ -82,7 +93,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ lsiScore, 
         }
 
         return alerts;
-    }, [lsiScore, domainScores]);
+    }, [lsiScore, domainScores, burnoutRisk]);
 
     const criticalCount = notifications.filter(n => n.severity === 'critical').length;
     const warningCount = notifications.filter(n => n.severity === 'warning').length;
@@ -98,8 +109,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ lsiScore, 
                 {/* Dynamic Badge */}
                 {notifications.length > 0 && (
                     <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${criticalCount > 0
-                            ? 'bg-red-50 text-red-700 ring-red-600/10'
-                            : 'bg-amber-50 text-amber-700 ring-amber-600/10'
+                        ? 'bg-red-50 text-red-700 ring-red-600/10'
+                        : 'bg-amber-50 text-amber-700 ring-amber-600/10'
                         }`}>
                         {criticalCount > 0
                             ? `${criticalCount} Critical`
