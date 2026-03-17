@@ -4,6 +4,7 @@ export interface DomainScores {
     Cognitive: number;
     Emotional: number;
     Financial: number;
+    [key: string]: number;
 }
 
 /**
@@ -32,7 +33,7 @@ export const calculateLSI = (
 ): number => {
     // Calculate the total weight to normalize in case custom weights don't sum to exactly 1.0
     const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
-    
+
     if (totalWeight === 0) {
         return 0; // Prevent division by zero if all weights are 0
     }
@@ -45,7 +46,7 @@ export const calculateLSI = (
         Financial: weights.Financial / totalWeight,
     };
 
-    const lsi = 
+    const lsi =
         (scores.Time * normalizedWeights.Time) +
         (scores.Energy * normalizedWeights.Energy) +
         (scores.Cognitive * normalizedWeights.Cognitive) +
@@ -101,10 +102,10 @@ export const ALERT_THRESHOLDS = {
  */
 export const generateDomainAlerts = (scores: DomainScores): StabilityAlert[] => {
     const alerts: StabilityAlert[] = [];
-    
+
     (Object.keys(scores) as (keyof DomainScores)[]).forEach(domain => {
         const score = scores[domain];
-        
+
         if (score < ALERT_THRESHOLDS.critical) {
             alerts.push({
                 id: `crit-${domain}-${Date.now()}`,
@@ -133,25 +134,51 @@ export const generateDomainAlerts = (scores: DomainScores): StabilityAlert[] => 
 export const SAFE_STABILITY_THRESHOLD = 70;
 
 /**
- * Estimates the recovery time needed based on the current Life Stability Index.
+ * Maps biological telemetry (sleep and activity) to a numerical Energy domain score (0-100).
  * 
- * @param lsi The current Life Stability Index (0-100)
- * @returns Estimated recovery time in hours
+ * Rules:
+ * - Sleep < 6h: Low energy base (30-50)
+ * - Sleep 6-8h: Medium energy base (50-80)
+ * - Sleep > 8h: High energy base (80-100)
+ * 
+ * Activity level provides a +/- 10% adjustment.
+ * 
+ * @param sleepHours Number of hours of sleep
+ * @param activity Activity level ('low' | 'medium' | 'high')
+ * @returns Numerical score (0-100)
+ */
+export const mapHealthToEnergyScore = (
+    sleepHours: number,
+    activity: 'low' | 'medium' | 'high'
+): number => {
+    let baseScore = 50;
+
+    if (sleepHours < 6) {
+        // Scale 30 to 50 based on how close to 6 they got
+        baseScore = 30 + (sleepHours / 6) * 20;
+    } else if (sleepHours <= 8) {
+        // Scale 50 to 80 based on how close to 8 they got
+        baseScore = 50 + ((sleepHours - 6) / 2) * 30;
+    } else {
+        // Scale 80 to 100 capped at 10 hours
+        baseScore = 80 + (Math.min(sleepHours - 8, 2) / 2) * 20;
+    }
+
+    // Activity Modifier
+    const activityModifiers = {
+        low: -5,
+        medium: 0,
+        high: 10
+    };
+
+    const finalScore = baseScore + activityModifiers[activity];
+
+    return Math.min(Math.max(Math.round(finalScore), 0), 100);
+};
+
+/**
+ * Estimates the recovery time needed based on the current Life Stability Index.
+ * ...
  */
 export const calculateRecoveryTime = (lsi: number): number => {
-    if (lsi >= SAFE_STABILITY_THRESHOLD) {
-        return 0;
-    }
-
-    if (lsi >= 40) {
-        // Warning Zone (40-70): Scale between 4 and 24 hours
-        // (70-70)*0.67 + 4 = 4
-        // (70-40)*0.67 + 4 = 20.1 + 4 = 24.1
-        return Math.round((SAFE_STABILITY_THRESHOLD - lsi) * 0.67 + 4);
-    }
-
-    // Critical Zone (<40): Scale between 24 and 120 hours (5 days)
-    // (40-40)*2.4 + 24 = 24
-    // (40-0)*2.4 + 24 = 96 + 24 = 120
-    return Math.round((40 - lsi) * 2.4 + 24);
-};
+// ... existing implementation remains
