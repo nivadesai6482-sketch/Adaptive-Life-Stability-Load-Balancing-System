@@ -16,6 +16,8 @@ import { HealthTelemetryCard } from '../components/common/HealthTelemetryCard';
 import { Smartphone, RefreshCw } from 'lucide-react';
 import { getHealthData, HealthData } from '../services/health/fitbitService';
 import { calculateEnergyScore, calculateStressLevel, EnergyLevel, StressLevel } from '../services/health/healthAnalyzer';
+import { BurnoutIndicator } from '../components/analytics/BurnoutIndicator';
+import { predictBurnoutRisk } from '../utils/burnoutPredictor';
 import { useTaskStore } from '../store/taskStore';
 import { predictFutureStability, predictStabilityTrend } from '../utils/stabilityPrediction';
 import { PredictionChart } from '../components/charts/PredictionChart';
@@ -163,21 +165,63 @@ export const Dashboard = () => {
                 </div>
             </div>
 
-            {/* AI Load Balancing Redirection System */}
-            <TaskOptimizer
-                tasks={tasks}
-                cognitiveLoad={cognitiveLoad}
-                energyScore={currentScores.Energy}
-            />
+            {/* SECTION: Integrated Optimization Engine */}
+            <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30">
+                            <SlidersHorizontal className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">System Intelligence & Optimization</h3>
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Holistic load balancing & risk mitigation</p>
+                        </div>
+                    </div>
 
-            <SystemSummary currentScores={currentScores} />
-
-            {/* Burnout Monitoring */}
-            {isDeviceConnected && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <BurnoutIndicator risk={burnoutRisk} />
+                    {/* Holistic System Status Badge */}
+                    <div className={`px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest shadow-sm flex items-center gap-2 ${burnoutRisk === 'HIGH' || lsiScore < 40 ? 'bg-red-50 text-red-700 border-red-100 animate-pulse' :
+                            burnoutRisk === 'MEDIUM' || cognitiveLoad > 80 || lsiScore < 70 ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                'bg-emerald-50 text-emerald-700 border-emerald-100'
+                        }`}>
+                        <div className={`h-2 w-2 rounded-full ${burnoutRisk === 'HIGH' || lsiScore < 40 ? 'bg-red-600' :
+                                burnoutRisk === 'MEDIUM' || cognitiveLoad > 80 || lsiScore < 70 ? 'bg-amber-600' :
+                                    'bg-emerald-600'
+                            }`} />
+                        {burnoutRisk === 'HIGH' || lsiScore < 40 ? 'System Critical' :
+                            burnoutRisk === 'MEDIUM' || cognitiveLoad > 80 || lsiScore < 70 ? 'System Strained' :
+                                'System Operational'}
+                    </div>
                 </div>
-            )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left: Task Optimizer (Primary Decision Center) */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <TaskOptimizer
+                            tasks={tasks}
+                            cognitiveLoad={cognitiveLoad}
+                            energyScore={currentScores.Energy}
+                            burnoutRisk={burnoutRisk}
+                        />
+                        <SystemSummary currentScores={currentScores} />
+                    </div>
+
+                    {/* Right: Risk Indicators & Prescriptions */}
+                    <div className="space-y-6">
+                        {isDeviceConnected && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                <BurnoutIndicator risk={burnoutRisk} />
+                            </div>
+                        )}
+                        <CollapseForecast collapseWindow={predictionResult.collapseWindow} />
+                        <CollapseRiskIndicator lsi={lsiScore} />
+                        {(lsiScore < 70 || burnoutRisk !== 'LOW') && (
+                            <div className="animate-in zoom-in-95 duration-500">
+                                <RecoverySuggestions lsi={lsiScore} />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             {/* SECTION: Core Metrics */}
             <div className="space-y-4">
@@ -256,16 +300,11 @@ export const Dashboard = () => {
                     </div>
 
                     {/* Radar Chart & Risk Indicators Area */}
-                    <div className="flex flex-col gap-6">
-                        <CollapseForecast collapseWindow={predictionResult.collapseWindow} />
-                        <CollapseRiskIndicator lsi={lsiScore} />
-                        {lsiScore < 70 && <RecoverySuggestions lsi={lsiScore} />}
-                        <WeakestDomainIndicator />
-                        <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px] transition-all duration-300 hover:shadow-md backdrop-blur-sm">
-                            <Suspense fallback={<ChartSkeleton />}>
-                                <RadarChart />
-                            </Suspense>
-                        </div>
+                    <WeakestDomainIndicator />
+                    <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px] transition-all duration-300 hover:shadow-md backdrop-blur-sm">
+                        <Suspense fallback={<ChartSkeleton />}>
+                            <RadarChart />
+                        </Suspense>
                     </div>
                 </div>
             </div>
