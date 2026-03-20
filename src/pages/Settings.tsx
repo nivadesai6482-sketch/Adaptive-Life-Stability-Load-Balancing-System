@@ -4,6 +4,8 @@ import { Bell, ShieldAlert, Sliders, Activity, Zap, Heart, DollarSign, Brain, Ta
 const Settings = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-12">
+            <h1 className="text-white text-2xl font-bold bg-indigo-600 p-4 rounded-xl text-center">Settings Page Loaded</h1>
+
             <div className="flex flex-col gap-1">
                 <h1 className="text-3xl font-black text-white tracking-tight">Settings</h1>
                 <p className="text-slate-400 font-medium">Configure your life stability system and notification thresholds.</p>
