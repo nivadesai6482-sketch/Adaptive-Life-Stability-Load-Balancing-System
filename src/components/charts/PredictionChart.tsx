@@ -99,7 +99,7 @@ export const PredictionChart: React.FC<PredictionChartProps> = ({ historicalData
                     {/* The Last Known Point Mark */}
                     {historicalData.length > 0 && (
                         <ReferenceLine
-                            x={historicalData[historicalScores.length - 1]?.date}
+                            x={historicalData[historicalData.length - 1]?.date}
                             stroke="#6366f1"
                             strokeDasharray="3 3"
                             label={{ position: 'top', value: 'Present', fill: '#6366f1', fontSize: 10, fontWeight: 900 }}
