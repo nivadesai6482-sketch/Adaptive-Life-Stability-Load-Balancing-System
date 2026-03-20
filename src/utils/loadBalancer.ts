@@ -1,22 +1,51 @@
 import { Task } from '../store/taskStore';
+import { BurnoutRiskLevel } from './burnoutPredictor';
 
 /**
- * Optimizes a task list based on current user load and energy metrics.
+ * Optimizes a task list based on current user load, energy metrics, and burnout risk.
  * 
  * @param tasks Current list of tasks
  * @param cognitiveLoad Current calculated cognitive load (0-100+)
  * @param energyScore Current energy score (0-100)
+ * @param burnoutRisk Current predicted burnout risk level
  * @returns Optimized task list with deferred items or injected recovery
  */
 export const optimizeTaskList = (
     tasks: Task[],
     cognitiveLoad: number,
-    energyScore: number
+    energyScore: number,
+    burnoutRisk: BurnoutRiskLevel = 'LOW'
 ): Task[] => {
     let optimized = [...tasks];
 
-    // 1. RECOVERY INJECTION (Priority 1)
-    // If energy is critically low, we must insert a recovery block at the beginning.
+    // 1. BURNOUT PROTOCOL (Critical Priority)
+    // If burnout risk is HIGH, we initiate aggressive load shedding.
+    if (burnoutRisk === 'HIGH') {
+        const recoveryTask: Task = {
+            _id: 'auto-gen-burnout-recovery-' + Date.now(),
+            title: '🛌 CRITICAL RECOVERY: 30-min Deep Decompression',
+            priority: 'high',
+            deadline: new Date().toISOString(),
+            status: 'todo'
+        };
+
+        // Filter out all but the most high priority tasks for immediate focus
+        let highPriorityCount = 0;
+        optimized = optimized.filter(task => {
+            if (task.priority === 'high' && task.status === 'todo') {
+                highPriorityCount++;
+                return highPriorityCount <= 2; // Only allow 2 high priority tasks
+            }
+            return false; // Defer/Drop everything else
+        });
+
+        // Add deep recovery at the start
+        optimized.unshift(recoveryTask);
+        return optimized; // Exit early for high burnout
+    }
+
+    // 2. RECOVERY INJECTION
+    // (Standard logic for non-burning out users)
     if (energyScore < 40) {
         const recoveryTask: Task = {
             _id: 'auto-gen-recovery-' + Date.now(),
