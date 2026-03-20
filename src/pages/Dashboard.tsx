@@ -16,12 +16,11 @@ import { HealthTelemetryCard } from '../components/common/HealthTelemetryCard';
 import { Smartphone, RefreshCw } from 'lucide-react';
 import { getHealthData, HealthData } from '../services/health/fitbitService';
 import { calculateEnergyScore, calculateStressLevel, EnergyLevel, StressLevel } from '../services/health/healthAnalyzer';
-import { BurnoutIndicator } from '../components/analytics/BurnoutIndicator';
-import { predictBurnoutRisk } from '../utils/burnoutPredictor';
 import { useTaskStore } from '../store/taskStore';
 import { predictFutureStability, predictStabilityTrend } from '../utils/stabilityPrediction';
 import { PredictionChart } from '../components/charts/PredictionChart';
 import { CollapseForecast } from '../components/analytics/CollapseForecast';
+import { TaskOptimizer } from '../components/analytics/TaskOptimizer';
 
 // Lazy load heavy charting components
 const RadarChart = lazy(() => import('../components/charts/RadarChart').then(module => ({ default: module.RadarChart })));
@@ -165,7 +164,11 @@ export const Dashboard = () => {
             </div>
 
             {/* AI Load Balancing Redirection System */}
-            <TaskRedistributionSuggestions />
+            <TaskOptimizer
+                tasks={tasks}
+                cognitiveLoad={cognitiveLoad}
+                energyScore={currentScores.Energy}
+            />
 
             <SystemSummary currentScores={currentScores} />
 
