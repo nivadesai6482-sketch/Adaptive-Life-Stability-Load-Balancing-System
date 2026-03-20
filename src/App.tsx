@@ -10,51 +10,53 @@ import { TaskProvider } from './store/taskStore';
 import { StabilityProvider } from './store/stabilityStore';
 import { AuthProvider } from './store/authStore';
 import { ToastProvider } from './store/toastStore';
+import { ThemeProvider } from './store/themeStore';
 import { ToastContainer } from './components/common/ToastContainer';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 function App() {
     return (
         <ErrorBoundary>
-            <ToastProvider>
-                <AuthProvider>
-                    <StabilityProvider>
-                        <TaskProvider>
-                            <BrowserRouter>
-                                <Routes>
-                                    <Route path="/login" element={<Login />} />
-                                    <Route path="/register" element={<Register />} />
+            <ThemeProvider>
+                <ToastProvider>
+                    <AuthProvider>
+                        <StabilityProvider>
+                            <TaskProvider>
+                                <BrowserRouter>
+                                    <Routes>
+                                        <Route path="/login" element={<Login />} />
+                                        <Route path="/register" element={<Register />} />
 
-                                    {/* Define a route that wraps actual app content and requires auth (simplified for now) */}
-                                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                                    <Route path="/dashboard" element={
-                                        <ProtectedRoute>
-                                            <DashboardLayout>
-                                                <Dashboard />
-                                            </DashboardLayout>
-                                        </ProtectedRoute>
-                                    } />
-                                    <Route path="/tasks" element={
-                                        <ProtectedRoute>
-                                            <DashboardLayout>
-                                                <Tasks />
-                                            </DashboardLayout>
-                                        </ProtectedRoute>
-                                    } />
-                                    <Route path="/settings" element={
-                                        <ProtectedRoute>
-                                            <DashboardLayout>
-                                                <Settings />
-                                            </DashboardLayout>
-                                        </ProtectedRoute>
-                                    } />
-                                </Routes>
-                            </BrowserRouter>
-                        </TaskProvider>
-                    </StabilityProvider>
-                </AuthProvider>
-                <ToastContainer />
-            </ToastProvider>
+                                        {/* Define a route that wraps actual app content and requires auth (simplified for now) */}
+                                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                                        <Route path="/dashboard" element={
+                                            <ProtectedRoute>
+                                                <DashboardLayout>
+                                                    <Dashboard />
+                                                </DashboardLayout>
+                                            </ProtectedRoute>
+                                        } />
+                                        <Route path="/tasks" element={
+                                            <ProtectedRoute>
+                                                <DashboardLayout>
+                                                    <Tasks />
+                                                </DashboardLayout>
+                                            </ProtectedRoute>
+                                        } />
+                                        <Route path="/settings" element={
+                                            <ProtectedRoute>
+                                                <DashboardLayout>
+                                                    <Settings />
+                                                </DashboardLayout>
+                                            </ProtectedRoute>
+                                        } />
+                                    </Routes>
+                                </BrowserRouter>
+                            </TaskProvider>
+                        </StabilityProvider>
+                    </AuthProvider>
+                    <ToastContainer />
+                </ToastProvider>
         </ErrorBoundary>
     );
 }

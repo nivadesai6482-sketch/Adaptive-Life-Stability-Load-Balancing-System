@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-slate-50 text-slate-950 transition-colors duration-300 antialiased;
+    }
+
+    .dark body {
+        @apply bg-slate-950 text-slate-50;
+    }
+
+    /* Ensure all cards and panels transition smoothly */
+    * {
+        @apply border-slate-200 dark:border-slate-800 transition-colors duration-300;
+    }
+}
+
+/* Custom scrollbar for dark/light mode */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors;
+}
