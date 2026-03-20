@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Send, X, Bot, User, Sparkles, MinusCircle } from 'lucide-react';
+import { useStabilityStore } from '../../store/stabilityStore';
+import { useTaskStore } from '../../store/taskStore';
+import { calculateLSI } from '../../utils/stabilityCalculator';
+import { predictBurnoutRisk } from '../../utils/burnoutPredictor';
+import { getBotResponse } from '../../utils/chatbotLogic';
 
 interface Message {
     id: string;
@@ -11,14 +16,44 @@ interface Message {
 export const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
+    const { currentScores, healthData } = useStabilityStore();
+    const { tasks } = useTaskStore();
+
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
-            text: 'Hello! I am your ALS-LBS Assistant. How can I help you optimize your stability today?',
+            text: 'System Link Established. I am your ALS-LBS Assistant. I have successfully synchronized with your real-time stability telemetry.',
             sender: 'bot',
             timestamp: new Date()
         }
     ]);
+
+    useEffect(() => {
+        if (isOpen && messages.length === 1) {
+            const lsi = calculateLSI(currentScores);
+            const cognitiveLoad = tasks.reduce((acc, task) => {
+                if (task.status === 'completed') return acc;
+                const weights = { high: 25, medium: 15, low: 5 };
+                return acc + (weights[task.priority] || 5);
+            }, 0);
+
+            const burnoutRisk = predictBurnoutRisk({
+                lifeStabilityIndex: lsi,
+                cognitiveLoad: cognitiveLoad,
+                sleepHours: healthData?.sleepHours || 8,
+                heartRate: healthData?.heartRate || 70
+            });
+
+            const diagnosticMsg: Message = {
+                id: '2',
+                text: `STATUS UPDATE:\n• Life Stability Index: ${lsi.toFixed(1)}\n• Burnout Risk: ${burnoutRisk}\n• Cognitive Load: ${cognitiveLoad}\n\nHow should we optimize your load balancing today?`,
+                sender: 'bot',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, diagnosticMsg]);
+        }
+    }, [isOpen, messages.length, currentScores, healthData, tasks]);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -32,6 +67,21 @@ export const Chatbot = () => {
     const handleSend = () => {
         if (!input.trim()) return;
 
+        // Calculate current system state for logic
+        const lsiScore = calculateLSI(currentScores);
+        const cognitiveLoad = tasks.reduce((acc, task) => {
+            if (task.status === 'completed') return acc;
+            const weights = { high: 25, medium: 15, low: 5 };
+            return acc + (weights[task.priority] || 5);
+        }, 0);
+
+        const burnoutRisk = predictBurnoutRisk({
+            lifeStabilityIndex: lsiScore,
+            cognitiveLoad: cognitiveLoad,
+            sleepHours: healthData?.sleepHours || 8,
+            heartRate: healthData?.heartRate || 70
+        });
+
         const userMessage: Message = {
             id: Date.now().toString(),
             text: input,
@@ -40,18 +90,27 @@ export const Chatbot = () => {
         };
 
         setMessages(prev => [...prev, userMessage]);
+        const currentInput = input;
         setInput('');
 
-        // Mock bot response
+        // Process using diagnostic engine
         setTimeout(() => {
+            const response = getBotResponse(currentInput, {
+                lsi: lsiScore,
+                burnoutRisk,
+                energy: currentScores.Energy,
+                cognitiveLoad,
+                domains: currentScores
+            });
+
             const botMessage: Message = {
                 id: (Date.now() + 1).toString(),
-                text: "I'm processing your request using the latest stability telemetry. I'll be able to provide deep tactical insights once the neural sync is complete.",
+                text: response,
                 sender: 'bot',
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, botMessage]);
-        }, 1000);
+        }, 800);
     };
 
     return (
@@ -94,8 +153,8 @@ export const Chatbot = () => {
                                         {msg.sender === 'user' ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
                                     </div>
                                     <div className={`p-3 rounded-2xl text-sm font-medium ${msg.sender === 'user'
-                                            ? 'bg-indigo-600 text-white rounded-tr-none'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none'
+                                        ? 'bg-indigo-600 text-white rounded-tr-none'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none'
                                         }`}>
                                         {msg.text}
                                     </div>
@@ -134,8 +193,8 @@ export const Chatbot = () => {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`p-4 rounded-2xl shadow-2xl transition-all duration-300 active:scale-90 flex items-center gap-2 group ${isOpen
-                        ? 'bg-slate-800 text-white'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-500'
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-500'
                     }`}
             >
                 {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6 group-hover:scale-110 transition-transform" />}
