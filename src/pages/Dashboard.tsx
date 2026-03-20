@@ -19,10 +19,11 @@ import { calculateEnergyScore, calculateStressLevel, EnergyLevel, StressLevel } 
 import { BurnoutIndicator } from '../components/analytics/BurnoutIndicator';
 import { predictBurnoutRisk } from '../utils/burnoutPredictor';
 import { useTaskStore } from '../store/taskStore';
+import { predictFutureStability } from '../utils/stabilityPrediction';
+import { PredictionChart } from '../components/charts/PredictionChart';
 
 // Lazy load heavy charting components
 const RadarChart = lazy(() => import('../components/charts/RadarChart').then(module => ({ default: module.RadarChart })));
-const StabilityTrendChart = lazy(() => import('../components/charts/StabilityTrendChart').then(module => ({ default: module.StabilityTrendChart })));
 const CollapseForecastChart = lazy(() => import('../components/charts/CollapseForecastChart').then(module => ({ default: module.CollapseForecastChart })));
 const DomainComparisonChart = lazy(() => import('../components/charts/DomainComparisonChart').then(module => ({ default: module.DomainComparisonChart })));
 const StabilityHeatmap = lazy(() => import('../components/charts/StabilityHeatmap').then(module => ({ default: module.StabilityHeatmap })));
@@ -41,9 +42,12 @@ export const Dashboard = () => {
         disconnectDevice
     } = useStabilityStore();
 
+    const { tasks, fetchTasks } = useTaskStore();
+
     React.useEffect(() => {
         fetchHistoricalScores();
-    }, [fetchHistoricalScores]);
+        fetchTasks();
+    }, [fetchHistoricalScores, fetchTasks]);
 
     const [healthAnalysis, setHealthAnalysis] = React.useState<{
         energy: EnergyLevel;
@@ -62,7 +66,21 @@ export const Dashboard = () => {
         }
     };
 
+    // Derive cognitive load from tasks
+    const cognitiveLoad = tasks.reduce((acc, task) => {
+        if (task.status === 'completed') return acc;
+        const weights = { high: 25, medium: 15, low: 5 };
+        return acc + (weights[task.priority] || 5);
+    }, 0);
+
     const lsiScore = calculateLSI(currentScores);
+
+    const burnoutRisk = healthData ? predictBurnoutRisk({
+        lifeStabilityIndex: lsiScore,
+        cognitiveLoad: cognitiveLoad,
+        sleepHours: healthData.sleepHours,
+        heartRate: healthData.heartRate
+    }) : 'LOW';
 
     // Persist daily score if not already present for today
     // We use a separate state to avoid immediate re-checks that might cause loops
@@ -204,9 +222,16 @@ export const Dashboard = () => {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Analytics Area Primary */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[400px] flex items-center justify-center transition-all duration-300 hover:shadow-md backdrop-blur-sm">
+                        <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[400px] flex flex-col transition-all duration-300 hover:shadow-md backdrop-blur-sm">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">System Trajectory & Forecast</h3>
+                                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Historical stability vs predictive trajectory</p>
+                            </div>
                             <Suspense fallback={<ChartSkeleton />}>
-                                <StabilityTrendChart />
+                                <PredictionChart
+                                    historicalData={historicalScores}
+                                    predictedData={predictFutureStability(historicalScores, 5)}
+                                />
                             </Suspense>
                         </div>
 
@@ -269,7 +294,11 @@ export const Dashboard = () => {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* System Alerts Row */}
                     <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[300px] max-h-[400px] transition-all duration-300 hover:shadow-md overflow-hidden backdrop-blur-sm">
-                        <NotificationPanel lsiScore={lsiScore} domainScores={currentScores} />
+                        <NotificationPanel
+                            lsiScore={lsiScore}
+                            domainScores={currentScores}
+                            burnoutRisk={burnoutRisk}
+                        />
                     </div>
 
                     {/* Domain Input Form */}
