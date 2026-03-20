@@ -19,8 +19,9 @@ import { calculateEnergyScore, calculateStressLevel, EnergyLevel, StressLevel } 
 import { BurnoutIndicator } from '../components/analytics/BurnoutIndicator';
 import { predictBurnoutRisk } from '../utils/burnoutPredictor';
 import { useTaskStore } from '../store/taskStore';
-import { predictFutureStability } from '../utils/stabilityPrediction';
+import { predictFutureStability, predictStabilityTrend } from '../utils/stabilityPrediction';
 import { PredictionChart } from '../components/charts/PredictionChart';
+import { CollapseForecast } from '../components/analytics/CollapseForecast';
 
 // Lazy load heavy charting components
 const RadarChart = lazy(() => import('../components/charts/RadarChart').then(module => ({ default: module.RadarChart })));
@@ -81,6 +82,11 @@ export const Dashboard = () => {
         sleepHours: healthData.sleepHours,
         heartRate: healthData.heartRate
     }) : 'LOW';
+
+    // Calculate predictive stability metrics
+    const predictionResult = React.useMemo(() => {
+        return predictStabilityTrend(historicalScores);
+    }, [historicalScores]);
 
     // Persist daily score if not already present for today
     // We use a separate state to avoid immediate re-checks that might cause loops
@@ -248,6 +254,7 @@ export const Dashboard = () => {
 
                     {/* Radar Chart & Risk Indicators Area */}
                     <div className="flex flex-col gap-6">
+                        <CollapseForecast collapseWindow={predictionResult.collapseWindow} />
                         <CollapseRiskIndicator lsi={lsiScore} />
                         {lsiScore < 70 && <RecoverySuggestions lsi={lsiScore} />}
                         <WeakestDomainIndicator />
