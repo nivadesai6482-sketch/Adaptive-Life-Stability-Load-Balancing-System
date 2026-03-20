@@ -3,9 +3,12 @@ import { MetricCard } from '../components/common/MetricCard';
 import { ChartSkeleton } from '../components/common/ChartSkeleton';
 import { NotificationPanel } from '../components/notifications/NotificationPanel';
 import { WeakestDomainIndicator } from '../components/analytics/WeakestDomainIndicator';
-import { TaskRedistributionSuggestions } from '../components/analytics/TaskRedistributionSuggestions';
 import { DomainInputForm } from '../components/forms/DomainInputForm';
-import { Activity, Battery, ShieldAlert, AlertTriangle, LineChart, Server, SlidersHorizontal, BarChart2 } from 'lucide-react';
+import {
+    Activity, Battery, ShieldAlert, AlertTriangle,
+    LineChart, Server, SlidersHorizontal, BarChart2,
+    Smartphone, RefreshCw, Layers
+} from 'lucide-react';
 import { calculateLSI } from '../utils/stabilityCalculator';
 import { useStabilityStore } from '../store/stabilityStore';
 import { CollapseRiskIndicator } from '../components/analytics/CollapseRiskIndicator';
@@ -13,8 +16,7 @@ import { RecoverySuggestions } from '../components/analytics/RecoverySuggestions
 import { WeeklyReport } from '../components/reports/WeeklyReport';
 import { SystemSummary } from '../components/analytics/SystemSummary';
 import { HealthTelemetryCard } from '../components/common/HealthTelemetryCard';
-import { Smartphone, RefreshCw } from 'lucide-react';
-import { getHealthData, HealthData } from '../services/health/fitbitService';
+import { getHealthData } from '../services/health/fitbitService';
 import { calculateEnergyScore, calculateStressLevel, EnergyLevel, StressLevel } from '../services/health/healthAnalyzer';
 import { BurnoutIndicator } from '../components/analytics/BurnoutIndicator';
 import { predictBurnoutRisk } from '../utils/burnoutPredictor';
@@ -31,7 +33,6 @@ const DomainComparisonChart = lazy(() => import('../components/charts/DomainComp
 const StabilityHeatmap = lazy(() => import('../components/charts/StabilityHeatmap').then(module => ({ default: module.StabilityHeatmap })));
 
 export const Dashboard = () => {
-    console.log('Dashboard Rendering...');
     const {
         addDailyScore,
         historicalScores,
@@ -40,8 +41,7 @@ export const Dashboard = () => {
         isDeviceConnected,
         isConnecting,
         healthData,
-        connectDevice,
-        disconnectDevice
+        connectDevice
     } = useStabilityStore();
 
     const { tasks, fetchTasks } = useTaskStore();
@@ -68,7 +68,6 @@ export const Dashboard = () => {
         }
     };
 
-    // Derive cognitive load from tasks
     const cognitiveLoad = tasks.reduce((acc, task) => {
         if (task.status === 'completed') return acc;
         const weights = { high: 25, medium: 15, low: 5 };
@@ -76,7 +75,6 @@ export const Dashboard = () => {
     }, 0);
 
     const lsiScore = calculateLSI(currentScores);
-
     const burnoutRisk = healthData ? predictBurnoutRisk({
         lifeStabilityIndex: lsiScore,
         cognitiveLoad: cognitiveLoad,
@@ -84,24 +82,16 @@ export const Dashboard = () => {
         heartRate: healthData.heartRate
     }) : 'LOW';
 
-    // Calculate predictive stability metrics
     const predictionResult = React.useMemo(() => {
         return predictStabilityTrend(historicalScores);
     }, [historicalScores]);
 
-    // Persist daily score if not already present for today
-    // We use a separate state to avoid immediate re-checks that might cause loops
     const [hasAttemptedDailySave, setHasAttemptedDailySave] = React.useState(false);
 
     React.useEffect(() => {
-        if (!historicalScores || historicalScores.length === 0 && !hasAttemptedDailySave) {
-            // If historicalScores is empty, wait for fetch or if after fetch still empty, proceed
-            return;
-        }
-
+        if (!historicalScores || (historicalScores.length === 0 && !hasAttemptedDailySave)) return;
         const today = new Date().toISOString().split('T')[0];
         const hasTodayScore = historicalScores.some(s => s.date === today);
-
         if (!hasTodayScore && !hasAttemptedDailySave) {
             setHasAttemptedDailySave(true);
             addDailyScore(currentScores);
@@ -109,252 +99,201 @@ export const Dashboard = () => {
     }, [currentScores, historicalScores, addDailyScore, hasAttemptedDailySave]);
 
     return (
-        <div className="space-y-8 pb-10">
-            {/* Page Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none transition-transform hover:scale-105">
-                        <SlidersHorizontal className="h-6 w-6" />
+        <div className="bg-slate-950 min-h-screen text-slate-200">
+            <div className="max-w-7xl mx-auto p-6 space-y-6">
+
+                {/* TOP SECTION: Header & Actions */}
+                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20">
+                            <Layers className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+                                ALS-LBS Dashboard
+                            </h1>
+                            <p className="text-sm font-medium text-slate-400">
+                                Adaptive Life Stability & Load Balancing System
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white sm:text-3xl transition-colors">
-                            ALS-LBS Dashboard
-                        </h2>
-                        <p className="mt-0.5 text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors">
-                            Real-time life stability and load balancing metrics.
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    {isDeviceConnected && healthData && (
-                        <HealthTelemetryCard
-                            data={healthData}
-                            energy={healthAnalysis?.energy}
-                            stress={healthAnalysis?.stress}
-                            isSyncing={isConnecting}
-                            onRefresh={handleConnectDevice}
-                        />
-                    )}
-                    <div className="flex flex-col items-end">
+
+                    <div className="flex items-center gap-3">
+                        {isDeviceConnected && healthData && (
+                            <HealthTelemetryCard
+                                data={healthData}
+                                energy={healthAnalysis?.energy}
+                                stress={healthAnalysis?.stress}
+                                isSyncing={isConnecting}
+                                onRefresh={handleConnectDevice}
+                            />
+                        )}
                         <button
                             onClick={handleConnectDevice}
                             disabled={isConnecting}
-                            type="button"
                             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition-all active:scale-95 ${isDeviceConnected
-                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
-                                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                    : 'bg-slate-900 text-white border border-slate-800 hover:bg-slate-800'
                                 }`}
                         >
-                            {isConnecting ? (
-                                <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
-                            ) : (
-                                <Smartphone className={`h-4 w-4 ${isDeviceConnected ? 'text-emerald-600' : 'text-gray-400'}`} />
-                            )}
-                            {isConnecting ? 'Bridging...' : isDeviceConnected ? 'Device: Connected' : 'Connect Health Device'}
+                            {isConnecting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+                            {isConnecting ? 'Bridging...' : isDeviceConnected ? 'Device Sync Active' : 'Connect Device'}
                         </button>
-                        {healthAnalysis && isDeviceConnected && (
-                            <div className="mt-1 flex gap-2">
-                                <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-50 px-1.5 py-0.5 rounded">Energy: {healthAnalysis.energy}</span>
-                                <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${healthAnalysis.stress === 'high' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>Stress: {healthAnalysis.stress}</span>
+                        <button className="inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 shadow-indigo-500/20 transition-all active:scale-95">
+                            Run Capacity Assessment
+                        </button>
+                    </div>
+                </header>
+
+                <main className="grid grid-cols-12 gap-6">
+
+                    {/* ROW 1: System Summary (8) & Alerts Panel (4) */}
+                    <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg h-full">
+                            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <Activity className="h-5 w-5 text-indigo-400" />
+                                System Optimization & Insights
+                            </h2>
+                            <div className="space-y-6">
+                                <TaskOptimizer
+                                    tasks={tasks}
+                                    cognitiveLoad={cognitiveLoad}
+                                    energyScore={currentScores.Energy}
+                                    burnoutRisk={burnoutRisk}
+                                />
+                                <SystemSummary currentScores={currentScores} />
                             </div>
-                        )}
-                    </div>
-                    <button type="button" className="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-95">
-                        Run Capacity Assessment
-                    </button>
-                </div>
-            </div>
-
-            {/* SECTION: Integrated Optimization Engine */}
-            <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
-                    <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30">
-                            <SlidersHorizontal className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">System Intelligence & Optimization</h3>
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Holistic load balancing & risk mitigation</p>
                         </div>
                     </div>
 
-                    {/* Holistic System Status Badge */}
-                    <div className={`px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest shadow-sm flex items-center gap-2 ${burnoutRisk === 'HIGH' || lsiScore < 40 ? 'bg-red-50 text-red-700 border-red-100 animate-pulse' :
-                            burnoutRisk === 'MEDIUM' || cognitiveLoad > 80 || lsiScore < 70 ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                'bg-emerald-50 text-emerald-700 border-emerald-100'
-                        }`}>
-                        <div className={`h-2 w-2 rounded-full ${burnoutRisk === 'HIGH' || lsiScore < 40 ? 'bg-red-600' :
-                                burnoutRisk === 'MEDIUM' || cognitiveLoad > 80 || lsiScore < 70 ? 'bg-amber-600' :
-                                    'bg-emerald-600'
-                            }`} />
-                        {burnoutRisk === 'HIGH' || lsiScore < 40 ? 'System Critical' :
-                            burnoutRisk === 'MEDIUM' || cognitiveLoad > 80 || lsiScore < 70 ? 'System Strained' :
-                                'System Operational'}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left: Task Optimizer (Primary Decision Center) */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <TaskOptimizer
-                            tasks={tasks}
-                            cognitiveLoad={cognitiveLoad}
-                            energyScore={currentScores.Energy}
-                            burnoutRisk={burnoutRisk}
-                        />
-                        <SystemSummary currentScores={currentScores} />
+                    <div className="col-span-12 lg:col-span-4">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg h-full overflow-hidden">
+                            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5 text-amber-400" />
+                                Critical Alerts Panel
+                            </h2>
+                            <NotificationPanel
+                                lsiScore={lsiScore}
+                                domainScores={currentScores}
+                                burnoutRisk={burnoutRisk}
+                            />
+                        </div>
                     </div>
 
-                    {/* Right: Risk Indicators & Prescriptions */}
-                    <div className="space-y-6">
-                        {isDeviceConnected && (
-                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                                <BurnoutIndicator risk={burnoutRisk} />
+                    {/* ROW 2: Collapse Forecast Chart (12) */}
+                    <div className="col-span-12">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+                            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <LineChart className="h-5 w-5 text-emerald-400" />
+                                Life Stability Trajectory & Collapse Forecast
+                            </h2>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="lg:col-span-2 h-[400px]">
+                                    <Suspense fallback={<ChartSkeleton />}>
+                                        <PredictionChart
+                                            historicalData={historicalScores}
+                                            predictedData={predictFutureStability(historicalScores, 5)}
+                                        />
+                                    </Suspense>
+                                </div>
+                                <div className="flex flex-col gap-4">
+                                    <CollapseForecast collapseWindow={predictionResult.collapseWindow} />
+                                    <CollapseRiskIndicator lsi={lsiScore} />
+                                    <BurnoutIndicator risk={burnoutRisk} />
+                                </div>
                             </div>
-                        )}
-                        <CollapseForecast collapseWindow={predictionResult.collapseWindow} />
-                        <CollapseRiskIndicator lsi={lsiScore} />
+                        </div>
+                    </div>
+
+                    {/* ROW 3: Radar Chart (6) & Core Metrics Cards (6) */}
+                    <div className="col-span-12 lg:col-span-6">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg h-[450px] flex flex-col">
+                            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <ShieldAlert className="h-5 w-5 text-indigo-400" />
+                                Domain Equilibrium Analysis
+                            </h2>
+                            <div className="flex-1 flex items-center justify-center">
+                                <Suspense fallback={<ChartSkeleton />}>
+                                    <RadarChart />
+                                </Suspense>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-0 shadow-lg overflow-hidden flex flex-col h-full">
+                            <MetricCard
+                                title="Stability Index"
+                                value={lsiScore.toFixed(1)}
+                                trend="up"
+                                trendValue="+1.2%"
+                                icon={<ShieldAlert className="h-5 w-5" />}
+                            />
+                        </div>
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-0 shadow-lg overflow-hidden flex flex-col h-full">
+                            <MetricCard
+                                title="Bio-Energy"
+                                value={`${currentScores.Energy}%`}
+                                trend="down"
+                                trendValue="-5%"
+                                icon={<Battery className="h-5 w-5" />}
+                            />
+                        </div>
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-0 shadow-lg overflow-hidden flex flex-col h-full">
+                            <MetricCard
+                                title="Cognitive Load"
+                                value={`${cognitiveLoad}`}
+                                trend="up"
+                                trendValue="Active"
+                                icon={<Activity className="h-5 w-5" />}
+                            />
+                        </div>
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-center">
+                            <WeakestDomainIndicator />
+                        </div>
                         {(lsiScore < 70 || burnoutRisk !== 'LOW') && (
-                            <div className="animate-in zoom-in-95 duration-500">
+                            <div className="col-span-1 sm:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg border-l-4 border-l-amber-500">
                                 <RecoverySuggestions lsi={lsiScore} />
                             </div>
                         )}
                     </div>
-                </div>
-            </div>
 
-            {/* SECTION: Core Metrics */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                    <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30">
-                        <BarChart2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Core System Metrics</h3>
-                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Real-time vital indicators</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    <MetricCard
-                        title="Life Stability Index"
-                        value={lsiScore.toFixed(1)}
-                        trend="up"
-                        trendValue="+1.2 from last week"
-                        icon={<ShieldAlert className="h-5 w-5" />}
-                    />
-                    <MetricCard
-                        title="Current Energy Level"
-                        value={`${currentScores.Energy}%`}
-                        trend="down"
-                        trendValue="-5% from yesterday"
-                        icon={<Battery className="h-5 w-5" />}
-                    />
-                    <MetricCard
-                        title="Active Commitments"
-                        value="12"
-                        trend="up"
-                        trendValue="+2 new tasks"
-                        icon={<Activity className="h-5 w-5" />}
-                    />
-                </div>
-            </div>
-
-            {/* SECTION: Predictive Analytics */}
-            <div className="space-y-6">
-                <div className="flex items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                    <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30">
-                        <LineChart className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Predictive Analytics & Trajectories</h3>
-                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Growth projections and risk modeling</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    {/* Analytics Area Primary */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[400px] flex flex-col transition-all duration-300 hover:shadow-md backdrop-blur-sm">
-                            <div className="mb-4">
-                                <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">System Trajectory & Forecast</h3>
-                                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Historical stability vs predictive trajectory</p>
-                            </div>
+                    {/* ROW 4: Stress Heatmap (12) */}
+                    <div className="col-span-12">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+                            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <BarChart2 className="h-5 w-5 text-rose-400" />
+                                Dialectical Stress Heatmap
+                            </h2>
                             <Suspense fallback={<ChartSkeleton />}>
-                                <PredictionChart
-                                    historicalData={historicalScores}
-                                    predictedData={predictFutureStability(historicalScores, 5)}
-                                />
-                            </Suspense>
-                        </div>
-
-                        <Suspense fallback={<div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[300px] flex items-center justify-center"><ChartSkeleton /></div>}>
-                            <CollapseForecastChart />
-                        </Suspense>
-
-                        <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[400px] flex items-center justify-center transition-all duration-300 hover:shadow-md backdrop-blur-sm">
-                            <Suspense fallback={<ChartSkeleton />}>
-                                <DomainComparisonChart scores={currentScores} />
+                                <StabilityHeatmap scores={currentScores} />
                             </Suspense>
                         </div>
                     </div>
 
-                    {/* Radar Chart & Risk Indicators Area */}
-                    <WeakestDomainIndicator />
-                    <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm flex-1 flex items-center justify-center min-h-[300px] transition-all duration-300 hover:shadow-md backdrop-blur-sm">
-                        <Suspense fallback={<ChartSkeleton />}>
-                            <RadarChart />
-                        </Suspense>
-                    </div>
-                </div>
-            </div>
-
-            {/* SECTION: Live Diagnostics */}
-            <div className="space-y-4 pt-4">
-                <div className="flex items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                    <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30">
-                        <SlidersHorizontal className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Live System Diagnostics</h3>
-                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Real-time heatmaps and metrics</p>
-                    </div>
-                </div>
-
-                <Suspense fallback={<div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[300px] flex items-center justify-center"><ChartSkeleton /></div>}>
-                    <StabilityHeatmap scores={currentScores} />
-                </Suspense>
-
-                <WeeklyReport />
-            </div>
-
-            {/* SECTION: Operations & Input */}
-            <div className="space-y-6 pt-4">
-                <div className="flex items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                    <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30">
-                        <Server className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Operations & Input</h3>
-                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">System alerts and manual adjustments</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    {/* System Alerts Row */}
-                    <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 p-6 shadow-sm min-h-[300px] max-h-[400px] transition-all duration-300 hover:shadow-md overflow-hidden backdrop-blur-sm">
-                        <NotificationPanel
-                            lsiScore={lsiScore}
-                            domainScores={currentScores}
-                            burnoutRisk={burnoutRisk}
-                        />
+                    {/* ROW 5: Weekly Stability Report (12) */}
+                    <div className="col-span-12">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+                            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <Server className="h-5 w-5 text-blue-400" />
+                                Weekly Performance Synthesis
+                            </h2>
+                            <WeeklyReport />
+                        </div>
                     </div>
 
-                    {/* Domain Input Form */}
-                    <div className="rounded-2xl shadow-sm min-h-[300px] max-h-[400px] bg-white dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 transition-all duration-300 hover:shadow-md overflow-hidden backdrop-blur-sm">
-                        <DomainInputForm />
+                    {/* ROW 6: Input Controls / Sliders (12) */}
+                    <div className="col-span-12">
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+                            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <SlidersHorizontal className="h-5 w-5 text-indigo-400" />
+                                Domain Parameter Adjustments
+                            </h2>
+                            <DomainInputForm />
+                        </div>
                     </div>
-                </div>
+
+                </main>
             </div>
         </div>
     );
