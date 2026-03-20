@@ -32,7 +32,11 @@ const CollapseForecastChart = lazy(() => import('../components/charts/CollapseFo
 const DomainComparisonChart = lazy(() => import('../components/charts/DomainComparisonChart').then(module => ({ default: module.DomainComparisonChart })));
 const StabilityHeatmap = lazy(() => import('../components/charts/StabilityHeatmap').then(module => ({ default: module.StabilityHeatmap })));
 
+import { exportReport } from '../utils/exportReport';
+import { useAuthStore } from '../store/authStore';
+
 export const Dashboard = () => {
+    const { user } = useAuthStore();
     const {
         addDailyScore,
         historicalScores,
@@ -81,6 +85,28 @@ export const Dashboard = () => {
         sleepHours: healthData.sleepHours,
         heartRate: healthData.heartRate
     }) : 'LOW';
+
+    const handleExport = () => {
+        if (!user) return;
+
+        const recommendations = [
+            lsiScore < 70 ? 'Immediate tactical load reduction required.' : 'Maintain current cognitive throughput.',
+            burnoutRisk !== 'LOW' ? 'Prioritize deep restorative sleep (8h+).' : 'System energy levels are within optimal tolerance.',
+            'Schedule incremental breaks between high-intensity tasks.',
+            'Monitor biological telemetry for early stress detection.'
+        ];
+
+        exportReport({
+            lsi: lsiScore,
+            burnoutRisk: burnoutRisk,
+            healthData: healthData ? {
+                sleepHours: healthData.sleepHours,
+                heartRate: healthData.heartRate
+            } : undefined,
+            recommendations,
+            userName: user.name
+        });
+    };
 
     const predictionResult = React.useMemo(() => {
         return predictStabilityTrend(historicalScores);
@@ -132,12 +158,19 @@ export const Dashboard = () => {
                             onClick={handleConnectDevice}
                             disabled={isConnecting}
                             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition-all active:scale-95 ${isDeviceConnected
-                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                                    : 'bg-slate-900 text-white border border-slate-800 hover:bg-slate-800'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                : 'bg-slate-900 text-white border border-slate-800 hover:bg-slate-800'
                                 }`}
                         >
                             {isConnecting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
                             {isConnecting ? 'Bridging...' : isDeviceConnected ? 'Device Sync Active' : 'Connect Device'}
+                        </button>
+                        <button
+                            onClick={handleExport}
+                            className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-slate-300 border border-slate-800 shadow-md hover:bg-slate-800 hover:text-white transition-all active:scale-95"
+                        >
+                            <BarChart2 className="h-4 w-4 mr-2" />
+                            Export Report
                         </button>
                         <button className="inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 shadow-indigo-500/20 transition-all active:scale-95">
                             Run Capacity Assessment
