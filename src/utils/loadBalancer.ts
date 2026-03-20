@@ -58,36 +58,68 @@ export const optimizeTaskList = (
         optimized.unshift(recoveryTask);
     }
 
-    // 2. LOAD SHEDDING (Priority 2)
-    // If cognitive load is extreme, move low priority tasks to tomorrow.
-    if (cognitiveLoad > 85) {
-        optimized = optimized.map(task => {
-            if (task.priority === 'low' && task.status !== 'completed') {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                return {
-                    ...task,
-                    title: `[DEFERRED] ${task.title}`,
-                    deadline: tomorrow.toISOString().split('T')[0]
-                };
-            }
-            return task;
-        });
+    // 3. OBJECTIVE OPTIMIZATION
+    // Use the mathematical model to refine the rest of the schedule
+    return optimizeSchedule(optimized, cognitiveLoad, energyScore);
+};
+
+/**
+ * Advanced optimization function using a weighted risk scoring model.
+ * Goal: Minimize Collapse Risk while respecting task priority.
+ */
+export const optimizeSchedule = (
+    tasks: Task[],
+    cognitiveLoad: number,
+    energyScore: number
+): Task[] => {
+    let currentSchedule = [...tasks];
+
+    // Risk Scoring Model: Higher is worse
+    const calculateRisk = (t: Task[], load: number, energy: number) => {
+        const loadFactor = load > 80 ? (load - 80) * 2 : 0;
+        const energyFactor = energy < 30 ? (30 - energy) * 3 : 0;
+        // Only count active todo tasks that ARE NOT deferred
+        const activeTodoCount = t.filter(x => x.status === 'todo' && !x.title.startsWith('[OPTIMIZED DEFER]')).length;
+        const taskFactor = activeTodoCount * 5;
+        return loadFactor + energyFactor + taskFactor;
+    };
+
+    let riskScore = calculateRisk(currentSchedule, cognitiveLoad, energyScore);
+    const TARGET_RISK = 40; // Slightly lower target for better stability
+
+    // Optimization Loop: Defer tasks until risk is acceptable
+    if (riskScore > TARGET_RISK) {
+        // Sort by priority (low first) to defer least important tasks first
+        const todoTasks = [...currentSchedule]
+            .filter(t => t.status === 'todo' && !t.title.includes('RECOVERY') && !t.title.includes('[OPTIMIZED DEFER]'))
+            .sort((a, b) => {
+                const pMap = { low: 0, medium: 1, high: 2 };
+                return pMap[a.priority] - pMap[b.priority];
+            });
+
+        for (const taskToDefer of todoTasks) {
+            if (riskScore <= TARGET_RISK) break;
+
+            // Defer the task
+            currentSchedule = currentSchedule.map(t => {
+                if (t._id === taskToDefer._id) {
+                    const nextDate = new Date();
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    return {
+                        ...t,
+                        title: `[OPTIMIZED DEFER] ${t.title}`,
+                        deadline: nextDate.toISOString().split('T')[0]
+                    };
+                }
+                return t;
+            });
+
+            // Recalculate load (removing deferred task from current load)
+            const weights = { high: 25, medium: 15, low: 5 };
+            cognitiveLoad -= weights[taskToDefer.priority];
+            riskScore = calculateRisk(currentSchedule, cognitiveLoad, energyScore);
+        }
     }
 
-    // 3. CAPACITY CAPPING
-    // If load is high, we limit the number of active 'todo' tasks shown to reduce psychological pressure.
-    if (cognitiveLoad > 70) {
-        let activeTodoCount = 0;
-        optimized = optimized.filter(task => {
-            if (task.status === 'todo') {
-                activeTodoCount++;
-                // Only allow top 5 tasks to stay in 'todo', others are hidden/deferred in this view
-                return activeTodoCount <= 5 || task.priority === 'high';
-            }
-            return true;
-        });
-    }
-
-    return optimized;
+    return currentSchedule;
 };
