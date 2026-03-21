@@ -28,6 +28,7 @@ router.post('/', protect, async (req, res) => {
             - Biological Energy Score: ${systemContext.energy}%
             - Active Cognitive Task Load: ${systemContext.cognitiveLoad}
             - Domain Equilibrium: Time(${systemContext.domains.Time}), Energy(${systemContext.domains.Energy}), Cognitive(${systemContext.domains.Cognitive}), Emotional(${systemContext.domains.Emotional}), Financial(${systemContext.domains.Financial})
+            - CURRENT TASK QUEUE: ${JSON.stringify(systemContext.tasks)}
 
             YOUR MISSION:
             Provide SURGICALLY PRECISE, PERSONALIZED RECOMMENDATIONS based on this specific telemetry.
