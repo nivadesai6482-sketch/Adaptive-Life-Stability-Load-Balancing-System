@@ -19,6 +19,30 @@ router.post('/', protect, async (req, res) => {
             });
         }
 
+        // Translate technical telemetry into human language before sending to AI
+        const translateToHuman = (ctx) => {
+            let narratives = [];
+
+            // LSI Translation
+            if (ctx.lsi > 85) narratives.push("User's life feels very balanced and stable right now.");
+            else if (ctx.lsi > 70) narratives.push("User is doing okay but might be feeling a little bit off-balance.");
+            else narratives.push("User's life balance is currently struggling and they feel quite unsettled.");
+
+            // Burnout Translation
+            if (ctx.burnoutRisk === 'HIGH') narratives.push("The user is pushing themselves way too hard and is at a breaking point.");
+            else if (ctx.burnoutRisk === 'MEDIUM') narratives.push("The user has been feeling somewhat overwhelmed lately and may be mentally tired.");
+            else narratives.push("The user seems to be managing their stress levels well.");
+
+            // Energy Translation
+            if (ctx.energy < 40) narratives.push("They are feeling deeply drained and physically exhausted.");
+            else if (ctx.energy < 70) narratives.push("They might be starting to feel a bit tired or low on energy.");
+            else narratives.push("They have a healthy amount of energy today.");
+
+            return narratives.join(" ");
+        };
+
+        const humanNarrative = translateToHuman(systemContext);
+
         const systemPrompt = `
             You are a warm, supportive, emotionally intelligent human companion. You NEVER sound like a system, dashboard, AI model, or analytics tool.
 
@@ -31,13 +55,12 @@ router.post('/', protect, async (req, res) => {
             - Do NOT sound like customer support.
             - Speak like a caring friend.
 
-            BACKGROUND CONTEXT (NEVER mention these directly, convert into natural human understanding):
-            - Life Stability (LSI): ${systemContext.lsi.toFixed(1)}
-            - Fatigue/Burnout Status: ${systemContext.burnoutRisk}
-            - Current Energy: ${systemContext.energy}%
-            - Recent Load (Tasks): ${JSON.stringify(systemContext.tasks)}
+            SITUATION (Use this purely to inform your empathy):
+            ${humanNarrative} 
+            Recent load: ${JSON.stringify(systemContext.tasks.map(t => t.title))}
 
-            Your goal is to make the user feel heard and understood above all else. Use the background data only to inform your empathy. For example, if burnout is high, you might say "it sounds like you've been pushing yourself really hard lately."
+            IMPORTANT:
+            NEVER mention the technical data directly. Instead of "Your burnout risk is high", say things like "It sounds like you've been pushing yourself really hard lately."
 
             USER QUERY: ${message}
         `;
