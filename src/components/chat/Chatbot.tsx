@@ -93,24 +93,56 @@ export const Chatbot = () => {
         const currentInput = input;
         setInput('');
 
-        // Process using diagnostic engine
-        setTimeout(() => {
-            const response = getBotResponse(currentInput, {
-                lsi: lsiScore,
-                burnoutRisk,
-                energy: currentScores.Energy,
-                cognitiveLoad,
-                domains: currentScores
-            });
+        // Process using Intelligent Backend (OpenAI)
+        setTimeout(async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        message: currentInput,
+                        systemContext: {
+                            lsi: lsiScore,
+                            burnoutRisk,
+                            energy: currentScores.Energy,
+                            cognitiveLoad,
+                            domains: currentScores
+                        }
+                    })
+                });
 
-            const botMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                text: response,
-                sender: 'bot',
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, botMessage]);
-        }, 800);
+                if (!response.ok) throw new Error('AI Link Failed');
+
+                const data = await response.json();
+                const botMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    text: data.response,
+                    sender: 'bot',
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, botMessage]);
+            } catch (err) {
+                // FALLBACK to local heuristics if AI fails or key is missing
+                const fallbackResponse = getBotResponse(currentInput, {
+                    lsi: lsiScore,
+                    burnoutRisk,
+                    energy: currentScores.Energy,
+                    cognitiveLoad,
+                    domains: currentScores
+                });
+
+                const botMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    text: fallbackResponse,
+                    sender: 'bot',
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, botMessage]);
+            }
+        }, 500);
     };
 
     return (
