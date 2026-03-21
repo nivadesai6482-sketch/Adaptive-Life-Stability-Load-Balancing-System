@@ -16,6 +16,7 @@ interface Message {
 export const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
     const { currentScores, healthData } = useStabilityStore();
     const { tasks } = useTaskStore();
 
@@ -62,10 +63,10 @@ export const Chatbot = () => {
 
     useEffect(() => {
         if (isOpen) scrollToBottom();
-    }, [messages, isOpen]);
+    }, [messages, isOpen, isTyping]);
 
-    const handleSend = () => {
-        if (!input.trim()) return;
+    const handleSend = async () => {
+        if (!input.trim() || isTyping) return;
 
         // Calculate current system state for logic
         const lsiScore = calculateLSI(currentScores);
@@ -92,146 +93,178 @@ export const Chatbot = () => {
         setMessages(prev => [...prev, userMessage]);
         const currentInput = input;
         setInput('');
+        setIsTyping(true);
 
-        // Process using Intelligent Backend (OpenAI)
-        setTimeout(async () => {
-            try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/chat`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({
-                        message: currentInput,
-                        systemContext: {
-                            lsi: lsiScore,
-                            burnoutRisk,
-                            energy: currentScores.Energy,
-                            cognitiveLoad,
-                            domains: currentScores
-                        }
-                    })
-                });
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    message: currentInput,
+                    systemContext: {
+                        lsi: lsiScore,
+                        burnoutRisk,
+                        energy: currentScores.Energy,
+                        cognitiveLoad,
+                        domains: currentScores,
+                        tasks: tasks.map(t => ({ title: t.title, priority: t.priority, status: t.status }))
+                    }
+                })
+            });
 
-                if (!response.ok) throw new Error('AI Link Failed');
+            if (!response.ok) throw new Error('AI Link Failed');
 
-                const data = await response.json();
-                const botMessage: Message = {
-                    id: (Date.now() + 1).toString(),
-                    text: data.response,
-                    sender: 'bot',
-                    timestamp: new Date()
-                };
-                setMessages(prev => [...prev, botMessage]);
-            } catch (err) {
-                // FALLBACK to local heuristics if AI fails or key is missing
-                const fallbackResponse = getBotResponse(currentInput, {
-                    lsi: lsiScore,
-                    burnoutRisk,
-                    energy: currentScores.Energy,
-                    cognitiveLoad,
-                    domains: currentScores
-                });
+            const data = await response.json();
+            const botMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                text: data.response,
+                sender: 'bot',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, botMessage]);
+        } catch (err) {
+            // FALLBACK to local heuristics if AI fails or key is missing
+            const fallbackResponse = getBotResponse(currentInput, {
+                lsi: lsiScore,
+                burnoutRisk,
+                energy: currentScores.Energy,
+                cognitiveLoad,
+                domains: currentScores
+            });
 
-                const botMessage: Message = {
-                    id: (Date.now() + 1).toString(),
-                    text: fallbackResponse,
-                    sender: 'bot',
-                    timestamp: new Date()
-                };
-                setMessages(prev => [...prev, botMessage]);
-            }
-        }, 500);
+            const botMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                text: fallbackResponse,
+                sender: 'bot',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, botMessage]);
+        } finally {
+            setIsTyping(false);
+        }
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-            {/* Chat Window */}
+        <>
+            {/* Floating Toggle Button (Visible only when chat is closed) */}
+            {!isOpen && (
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="fixed bottom-6 right-6 p-4 bg-indigo-600 text-white rounded-2xl shadow-2xl hover:bg-indigo-500 transition-all active:scale-95 group z-40"
+                >
+                    <MessageSquare className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                    <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white text-xs font-bold py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl border border-slate-800">
+                        Open AI Assistant
+                    </span>
+                </button>
+            )}
+
+            {/* ChatGPT Style Modal Interface */}
             {isOpen && (
-                <div className="mb-4 w-80 sm:w-96 h-[500px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="w-full max-w-4xl h-[85vh] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden relative border-t-indigo-500/30">
 
-                    {/* Header */}
-                    <div className="bg-indigo-600 p-4 flex items-center justify-between text-white shadow-lg">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-lg">
-                                <Bot className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="font-black text-sm tracking-tight">System Assistant</p>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                                    <span className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Neural Link Active</span>
+                        {/* Header */}
+                        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2.5 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/20">
+                                    <Bot className="h-6 w-6 text-white" />
                                 </div>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-                        >
-                            <MinusCircle className="h-5 w-5" />
-                        </button>
-                    </div>
-
-                    {/* Messages Area */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
-                        {messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in duration-500`}
-                            >
-                                <div className={`max-w-[80%] flex items-start gap-2 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                    <div className={`p-1.5 rounded-lg shrink-0 ${msg.sender === 'user' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                                        {msg.sender === 'user' ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-                                    </div>
-                                    <div className={`p-3 rounded-2xl text-sm font-medium ${msg.sender === 'user'
-                                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none'
-                                        }`}>
-                                        {msg.text}
+                                <div>
+                                    <h3 className="font-black text-slate-100 tracking-tight text-lg">System Intelligence</h3>
+                                    <div className="flex items-center gap-2">
+                                        <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ALS-LBS Neural Core v4.0</span>
                                     </div>
                                 </div>
                             </div>
-                        ))}
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    {/* Input Area */}
-                    <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                        <div className="relative flex items-center gap-2">
-                            <input
-                                type="text"
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder="Ask about your stability..."
-                                className="flex-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                            />
                             <button
-                                onClick={handleSend}
-                                className="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-90"
+                                onClick={() => setIsOpen(false)}
+                                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
                             >
-                                <Send className="h-4 w-4" />
+                                <X className="h-6 w-6" />
                             </button>
                         </div>
-                        <p className="mt-2 text-[8px] text-center text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-1">
-                            <Sparkles className="h-2 w-2" /> Powered by ALS-LLM v2.4
-                        </p>
+
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto px-4 py-8 space-y-8 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                            <div className="max-w-3xl mx-auto space-y-8">
+                                {messages.map((msg) => (
+                                    <div
+                                        key={msg.id}
+                                        className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 fade-in duration-500`}
+                                    >
+                                        <div className={`flex gap-4 max-w-[85%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-lg ${msg.sender === 'user'
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-slate-800 text-slate-400'
+                                                }`}>
+                                                {msg.sender === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                                            </div>
+                                            <div className={`flex flex-col gap-1.5 ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                                                <div className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed font-medium shadow-sm ${msg.sender === 'user'
+                                                    ? 'bg-indigo-600 text-white rounded-tr-none'
+                                                    : 'bg-slate-800/50 text-slate-200 border border-slate-700/50 rounded-tl-none'
+                                                    }`}>
+                                                    <div className="whitespace-pre-wrap">{msg.text}</div>
+                                                </div>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">
+                                                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {isTyping && (
+                                    <div className="flex justify-start animate-in fade-in duration-300">
+                                        <div className="flex gap-4 items-center">
+                                            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+                                                <Bot className="h-4 w-4 text-slate-400" />
+                                            </div>
+                                            <div className="flex gap-1 px-4 py-3 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                                                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="p-6 bg-slate-900 border-t border-slate-800">
+                            <div className="max-w-3xl mx-auto relative group">
+                                <input
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                    placeholder="Analyze system state or ask for optimization strategy..."
+                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl pl-5 pr-14 py-4 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm font-bold shadow-inner"
+                                />
+                                <button
+                                    onClick={handleSend}
+                                    disabled={isTyping || !input.trim()}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed group-hover:scale-105 active:scale-95"
+                                >
+                                    <Send className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="mt-4 flex items-center justify-center gap-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                                <span className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-indigo-500" /> AI Diagnostic Layer</span>
+                                <span className="h-1 w-1 bg-slate-700 rounded-full"></span>
+                                <span>Context-Aware Coaching</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
-
-            {/* Toggle Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`p-4 rounded-2xl shadow-2xl transition-all duration-300 active:scale-90 flex items-center gap-2 group ${isOpen
-                    ? 'bg-slate-800 text-white'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-500'
-                    }`}
-            >
-                {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6 group-hover:scale-110 transition-transform" />}
-                {!isOpen && <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-bold text-sm whitespace-nowrap">Assistant</span>}
-            </button>
-        </div>
+        </>
     );
 };
