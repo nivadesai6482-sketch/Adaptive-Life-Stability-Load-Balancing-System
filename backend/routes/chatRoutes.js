@@ -80,7 +80,15 @@ router.post('/', protect, async (req, res) => {
             }
         });
 
-        res.json({ response: response.data.choices[0].message.content });
+        let aiResponse = response.data.choices[0].message.content;
+
+        // Strict Human-Centric Jargon Firewall (User-defined)
+        const forbidden = ["system", "telemetry", "analysis", "metrics", "model"];
+        for (let word of forbidden) {
+            aiResponse = aiResponse.replace(new RegExp(word, "gi"), "");
+        }
+
+        res.json({ response: aiResponse.trim() });
     } catch (error) {
         console.error('OpenAI Proxy Error:', error.response?.data || error.message);
         res.status(500).json({ message: 'Neural link interrupted. Reverting to local heuristics.' });
