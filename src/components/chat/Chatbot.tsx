@@ -257,9 +257,9 @@ export const Chatbot = () => {
                                 </button>
                             </div>
                             <div className="mt-4 flex items-center justify-center gap-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                                <span className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-indigo-500" /> AI Diagnostic Layer</span>
+                                <span className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-indigo-500" /> A supportive space</span>
                                 <span className="h-1 w-1 bg-slate-700 rounded-full"></span>
-                                <span>Context-Aware Coaching</span>
+                                <span>Always on your side</span>
                             </div>
                         </div>
                     </div>
