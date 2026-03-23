@@ -9,93 +9,40 @@ const { protect } = require('../middleware/authMiddleware');
  * @access  Private
  */
 router.post('/', protect, async (req, res) => {
+    const { message, history } = req.body;
+
     try {
-        const { message, systemContext, history } = req.body;
-        const apiKey = process.env.OPENAI_API_KEY;
-
-        if (!apiKey || apiKey === 'your_openai_api_key_here') {
-            return res.status(500).json({
-                message: 'AI Assistant is in heuristic mode. Please configure OPENAI_API_KEY in backend environment.'
-            });
-        }
-
-        // Translate technical telemetry into human language before sending to AI
-        const translateToHuman = (ctx) => {
-            let narratives = [];
-
-            // LSI Translation
-            if (ctx.lsi > 85) narratives.push("User's life feels very balanced and stable right now.");
-            else if (ctx.lsi > 70) narratives.push("User is doing okay but might be feeling a little bit off-balance.");
-            else narratives.push("User's life balance is currently struggling and they feel quite unsettled.");
-
-            // Burnout Translation
-            if (ctx.burnoutRisk === 'HIGH') narratives.push("The user is pushing themselves way too hard and is at a breaking point.");
-            else if (ctx.burnoutRisk === 'MEDIUM') narratives.push("The user has been feeling somewhat overwhelmed lately and may be mentally tired.");
-            else narratives.push("The user seems to be managing their stress levels well.");
-
-            // Energy Translation
-            if (ctx.energy < 40) narratives.push("They are feeling deeply drained and physically exhausted.");
-            else if (ctx.energy < 70) narratives.push("They might be starting to feel a bit tired or low on energy.");
-            else narratives.push("They have a healthy amount of energy today.");
-
-            return narratives.join(" ");
-        };
-
-        const humanNarrative = translateToHuman(systemContext);
-        const systemPrompt = `You are a warm, natural, human-like assistant.
-
-Talk like a real person.
-
-- respond differently every time
-- avoid repeating phrases
-- be conversational and adaptive
-- ask follow-up questions
-- keep tone relaxed and supportive
-
-Never repeat the same sentence twice.`;
-
-        // Construct OpenAI Messages with History
-        let apiMessages = [
-            { role: 'system', content: systemPrompt }
-        ];
-
-        // Add history (if any)
-        if (history && Array.isArray(history)) {
-            // Remove the last message from history if it's the current one to append context
-            const historyToInclude = history.slice(0, -1);
-            apiMessages.push(...historyToInclude);
-        }
-
-        // Add current message with context
-        apiMessages.push({
-            role: 'user',
-            content: `${message}\n\n(Note: ${humanNarrative})`
-        });
-
-        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-            model: 'gpt-3.5-turbo',
-            messages: apiMessages,
-            max_tokens: 300,
-            temperature: 0.7
+        const response = await axios.post("https://api.openai.com/v1/chat/completions", {
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a warm, human, supportive assistant. Talk like a real person."
+                },
+                ...(history || []),
+                { role: "user", content: message }
+            ]
         }, {
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
+                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+                "Content-Type": "application/json"
             }
         });
 
-        let aiResponse = response.data.choices[0].message.content;
+        const data = response.data;
 
-        // Strict Human-Centric Jargon Firewall (User-defined)
-        const forbidden = ["system", "telemetry", "analysis", "metrics", "model"];
-        for (let word of forbidden) {
-            aiResponse = aiResponse.replace(new RegExp(word, "gi"), "");
+        if (!data.choices) {
+            console.error("OpenAI Error:", data);
+            return res.json({ reply: "Something went wrong. Check backend logs." });
         }
 
-        res.json({ response: aiResponse.trim() });
+        const reply = data.choices[0].message.content;
+
+        res.json({ reply });
+
     } catch (error) {
-        console.error('OpenAI Proxy Error:', error.response?.data || error.message);
-        res.status(500).json({ message: 'Neural link interrupted. Reverting to local heuristics.' });
+        console.error("Server Error:", error.response?.data || error);
+        res.json({ reply: "Server error. Check backend logs." });
     }
 });
 
