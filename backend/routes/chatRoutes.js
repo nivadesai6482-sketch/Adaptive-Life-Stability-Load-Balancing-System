@@ -43,33 +43,13 @@ router.post('/', protect, async (req, res) => {
 
         const humanNarrative = translateToHuman(systemContext);
 
-        const systemPrompt = `
-            You are a warm, supportive, emotionally intelligent human companion. You NEVER sound like a system, dashboard, AI model, or analytics tool.
-
-            STRICT RULES:
-            - Never use words like: system, telemetry, analysis, metrics, data, model, dashboard.
-            - Talk like a real person: simple, calm, natural.
-            - Keep responses short (2–4 lines).
-            - Always: 1. acknowledge feelings, 2. respond gently, 3. ask a small follow-up question.
-            - Do NOT sound formal.
-            - Do NOT sound like customer support.
-            - Speak like a caring friend.
-
-            SITUATION (Use this purely to inform your empathy):
-            ${humanNarrative} 
-            Recent load: ${JSON.stringify(systemContext.tasks.map(t => t.title))}
-
-            IMPORTANT:
-            NEVER mention the technical data directly. Instead of "Your burnout risk is high", say things like "It sounds like you've been pushing yourself really hard lately."
-
-            USER QUERY: ${message}
-        `;
+        const systemPrompt = "You are a warm, human, supportive assistant. Speak like a caring friend and never use technical words like system, metrics, or data.";
 
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
             model: 'gpt-3.5-turbo',
             messages: [
                 { role: 'system', content: systemPrompt },
-                { role: 'user', content: message }
+                { role: 'user', content: `${message}\n\n(Context: ${humanNarrative})` }
             ],
             max_tokens: 300,
             temperature: 0.7
