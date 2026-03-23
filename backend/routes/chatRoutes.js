@@ -42,7 +42,17 @@ router.post('/', protect, async (req, res) => {
         };
 
         const humanNarrative = translateToHuman(systemContext);
-        const systemPrompt = "You are a warm, human, supportive assistant. Speak like a caring friend. Never use technical words, numbers, metrics, or system analysis. Keep responses short and natural.";
+        const systemPrompt = `You are a warm, natural, human-like assistant.
+
+Talk like a real person.
+
+- respond differently every time
+- avoid repeating phrases
+- be conversational and adaptive
+- ask follow-up questions
+- keep tone relaxed and supportive
+
+Never repeat the same sentence twice.`;
 
         // Construct OpenAI Messages with History
         let apiMessages = [
