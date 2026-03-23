@@ -10,7 +10,7 @@ const { protect } = require('../middleware/authMiddleware');
  */
 router.post('/', protect, async (req, res) => {
     try {
-        const { message, systemContext } = req.body;
+        const { message, systemContext, history } = req.body;
         const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey || apiKey === 'your_openai_api_key_here') {
@@ -42,15 +42,29 @@ router.post('/', protect, async (req, res) => {
         };
 
         const humanNarrative = translateToHuman(systemContext);
-
         const systemPrompt = "You are a warm, human, supportive assistant. Speak like a caring friend. Never use technical words, numbers, metrics, or system analysis. Keep responses short and natural.";
+
+        // Construct OpenAI Messages with History
+        let apiMessages = [
+            { role: 'system', content: systemPrompt }
+        ];
+
+        // Add history (if any)
+        if (history && Array.isArray(history)) {
+            // Remove the last message from history if it's the current one to append context
+            const historyToInclude = history.slice(0, -1);
+            apiMessages.push(...historyToInclude);
+        }
+
+        // Add current message with context
+        apiMessages.push({
+            role: 'user',
+            content: `${message}\n\n(Note: ${humanNarrative})`
+        });
 
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
             model: 'gpt-3.5-turbo',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: `${message}\n\n(Context: ${humanNarrative})` }
-            ],
+            messages: apiMessages,
             max_tokens: 300,
             temperature: 0.7
         }, {
