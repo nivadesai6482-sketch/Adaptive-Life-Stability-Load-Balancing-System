@@ -43,7 +43,7 @@ router.post('/', protect, async (req, res) => {
 
         const humanNarrative = translateToHuman(systemContext);
 
-        const systemPrompt = "You are a warm, human, supportive assistant. Speak like a caring friend and never use technical words like system, metrics, or data.";
+        const systemPrompt = "You are a warm, human, supportive assistant. Speak like a caring friend. Never use technical words, numbers, metrics, or system analysis. Keep responses short and natural.";
 
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
             model: 'gpt-3.5-turbo',
