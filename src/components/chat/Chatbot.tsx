@@ -23,37 +23,13 @@ export const Chatbot = () => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
-            text: 'System Link Established. I am your ALS-LBS Assistant. I have successfully synchronized with your real-time stability telemetry.',
+            text: "Hey, I'm here. What's on your mind?",
             sender: 'bot',
             timestamp: new Date()
         }
     ]);
 
-    useEffect(() => {
-        if (isOpen && messages.length === 1) {
-            const lsi = calculateLSI(currentScores);
-            const cognitiveLoad = tasks.reduce((acc, task) => {
-                if (task.status === 'completed') return acc;
-                const weights = { high: 25, medium: 15, low: 5 };
-                return acc + (weights[task.priority] || 5);
-            }, 0);
-
-            const burnoutRisk = predictBurnoutRisk({
-                lifeStabilityIndex: lsi,
-                cognitiveLoad: cognitiveLoad,
-                sleepHours: healthData?.sleepHours || 8,
-                heartRate: healthData?.heartRate || 70
-            });
-
-            const diagnosticMsg: Message = {
-                id: '2',
-                text: `STATUS UPDATE:\n• Life Stability Index: ${lsi.toFixed(1)}\n• Burnout Risk: ${burnoutRisk}\n• Cognitive Load: ${cognitiveLoad}\n\nHow should we optimize your load balancing today?`,
-                sender: 'bot',
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, diagnosticMsg]);
-        }
-    }, [isOpen, messages.length, currentScores, healthData, tasks]);
+    // Diagnostic effects removed for human-centric focus
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
