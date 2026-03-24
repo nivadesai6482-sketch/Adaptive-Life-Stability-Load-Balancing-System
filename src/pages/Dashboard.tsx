@@ -16,7 +16,6 @@ import { RecoverySuggestions } from '../components/analytics/RecoverySuggestions
 import { WeeklyReport } from '../components/reports/WeeklyReport';
 import { SystemSummary } from '../components/analytics/SystemSummary';
 import { HealthTelemetryCard } from '../components/common/HealthTelemetryCard';
-import { getHealthData } from '../services/health/fitbitService';
 import { calculateEnergyScore, calculateStressLevel, EnergyLevel, StressLevel } from '../services/health/healthAnalyzer';
 import { BurnoutIndicator } from '../components/analytics/BurnoutIndicator';
 import { predictBurnoutRisk } from '../utils/burnoutPredictor';
@@ -63,14 +62,19 @@ export const Dashboard = () => {
     const handleConnectDevice = async () => {
         try {
             await connectDevice();
-            const data = await getHealthData();
-            const energy = calculateEnergyScore(data.sleepHours, data.activityLevel);
-            const stress = calculateStressLevel(data.heartRate);
-            setHealthAnalysis({ energy, stress });
         } catch (error) {
             console.error('Connection failed', error);
         }
     };
+
+    // Recalculate health analysis when healthData changes
+    React.useEffect(() => {
+        if (healthData) {
+            const energy = calculateEnergyScore(healthData.sleepHours, healthData.activityLevel);
+            const stress = calculateStressLevel(healthData.heartRate);
+            setHealthAnalysis({ energy, stress });
+        }
+    }, [healthData]);
 
     const cognitiveLoad = tasks.reduce((acc, task) => {
         if (task.status === 'completed') return acc;
