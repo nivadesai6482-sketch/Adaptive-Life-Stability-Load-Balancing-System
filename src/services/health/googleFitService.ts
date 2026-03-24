@@ -51,8 +51,12 @@ export const fetchGoogleFitData = async () => {
     } catch (error: any) {
         if (error.response?.status === 401) {
             localStorage.removeItem("google_fit_access_token");
+            throw new Error("Your Google Fit session has expired. Please reconnect.");
         }
-        throw error;
+        if (error.code === 'ERR_NETWORK') {
+            throw new Error("Network error. Please check your internet connection.");
+        }
+        throw new Error("Unable to fetch data from Google Fit. Please try again later.");
     }
 };
 
