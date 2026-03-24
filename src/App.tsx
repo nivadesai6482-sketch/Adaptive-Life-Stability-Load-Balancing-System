@@ -5,6 +5,7 @@ import { Tasks } from './pages/Tasks';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { TaskProvider } from './store/taskStore';
 import { StabilityProvider } from './store/stabilityStore';
@@ -27,7 +28,6 @@ function App() {
                                         <Route path="/login" element={<Login />} />
                                         <Route path="/register" element={<Register />} />
 
-                                        {/* Define a route that wraps actual app content and requires auth (simplified for now) */}
                                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
                                         <Route path="/dashboard" element={
                                             <ProtectedRoute>
@@ -50,6 +50,13 @@ function App() {
                                                 </DashboardLayout>
                                             </ProtectedRoute>
                                         } />
+                                        <Route path="/profile" element={
+                                            <ProtectedRoute>
+                                                <DashboardLayout>
+                                                    <Profile />
+                                                </DashboardLayout>
+                                            </ProtectedRoute>
+                                        } />
                                     </Routes>
                                 </BrowserRouter>
                             </TaskProvider>
@@ -57,6 +64,7 @@ function App() {
                     </AuthProvider>
                     <ToastContainer />
                 </ToastProvider>
+            </ThemeProvider>
         </ErrorBoundary>
     );
 }
