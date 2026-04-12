@@ -3,7 +3,7 @@
  * In production (Vercel), VITE_API_URL should be set in the environment variables.
  * In development, it defaults to /api which is proxied by Vite to http://65.2.10.210:5000/api.
  */
-export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+export const API_BASE_URL = `${import.meta.env.VITE_API_URL || ''}/api`;
 
 export const API_ENDPOINTS = {
     AUTH: {
@@ -21,4 +21,5 @@ export const API_ENDPOINTS = {
         DAILY: `${API_BASE_URL}/stability/daily`,
     },
     HEALTH: `${API_BASE_URL}/health`,
+    CHAT: `${API_BASE_URL}/chat`,
 };

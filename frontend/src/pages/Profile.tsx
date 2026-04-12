@@ -31,7 +31,7 @@ const Profile = () => {
         setIsSaving(true);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://65.2.10.210:5000/api'}/profile`, {
+            const response = await fetch(API_ENDPOINTS.AUTH.PROFILE, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

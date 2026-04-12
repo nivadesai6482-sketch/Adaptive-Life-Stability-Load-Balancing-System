@@ -1,4 +1,5 @@
 import { Task } from '../store/taskStore';
+import { API_ENDPOINTS } from '../config/apiConfig';
 
 /**
  * Utility to generate and inject realistic demographic data into the system
@@ -12,7 +13,7 @@ export const generateDemoTasks = async () => {
     if (!token) throw new Error("Authentication required to inject demo data");
 
     const today = new Date();
-    
+
     const demoTasks = [
         {
             title: "Finalize Quarterly Tax Filings",
@@ -54,11 +55,11 @@ export const generateDemoTasks = async () => {
     console.log("Injecting Demo Tasks...");
     for (const task of demoTasks) {
         try {
-            const res = await fetch('/api/tasks', {
+            const res = await fetch(API_ENDPOINTS.TASKS.BASE, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ ...task, status: 'todo' })
             });
@@ -75,7 +76,7 @@ export const generateDemoStabilityScores = async () => {
     if (!token) throw new Error("Authentication required to inject demo data");
 
     const today = new Date();
-    
+
     // Simulate a 14-day historical curve (High -> Low -> Medium recovery)
     const curve = [
         { t: 85, e: 90, c: 80, em: 85, f: 90 }, // 14 days ago (Optimal)
@@ -105,10 +106,10 @@ export const generateDemoStabilityScores = async () => {
 
     for (let i = 0; i < curve.length; i++) {
         const point = curve[i];
-        
+
         // Calculate artificial LSI (average)
         const lsi = Math.round((point.t + point.e + point.c + point.em + point.f) / 5);
-        
+
         const payload = {
             timeScore: point.t,
             energyScore: point.e,
@@ -119,19 +120,19 @@ export const generateDemoStabilityScores = async () => {
         };
 
         try {
-            const res = await fetch('/api/stability', {
+            const res = await fetch(API_ENDPOINTS.STABILITY.BASE, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });
             if (!res.ok) console.error("Failed to inject score", await res.text());
         } catch (e) {
-             console.error("Network error during score injection", e);
+            console.error("Network error during score injection", e);
         }
     }
-    
+
     console.log("Demo Scores Injection Complete.");
 };
