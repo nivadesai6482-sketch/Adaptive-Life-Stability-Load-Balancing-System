@@ -1,5 +1,5 @@
 import { Task } from '../store/taskStore';
-import { API_ENDPOINTS } from '../config/apiConfig';
+import API_ENDPOINTS from '../config/apiConfig';
 
 /**
  * Utility to generate and inject realistic demographic data into the system
@@ -55,7 +55,7 @@ export const generateDemoTasks = async () => {
     console.log("Injecting Demo Tasks...");
     for (const task of demoTasks) {
         try {
-            const res = await fetch(API_ENDPOINTS.TASKS.BASE, {
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.TASKS.BASE}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export const generateDemoStabilityScores = async () => {
         };
 
         try {
-            const res = await fetch(API_ENDPOINTS.STABILITY.BASE, {
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.STABILITY.BASE}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -4,6 +4,7 @@ import {
     Camera, ShieldCheck, BadgeCheck, Loader2
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import API_ENDPOINTS from '../config/apiConfig';
 import { useToast } from '../store/toastStore';
 
 const Profile = () => {
@@ -31,7 +32,7 @@ const Profile = () => {
         setIsSaving(true);
 
         try {
-            const response = await fetch(API_ENDPOINTS.AUTH.PROFILE, {
+            const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.AUTH.PROFILE}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

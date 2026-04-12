@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { useToast } from './toastStore';
-import { API_ENDPOINTS } from '../config/apiConfig';
+import API_ENDPOINTS from '../config/apiConfig';
 
 export interface Task {
     _id: string;
@@ -26,7 +26,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchTasks = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(API_ENDPOINTS.TASKS.BASE, {
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.TASKS.BASE}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -49,11 +49,11 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const token = localStorage.getItem('token');
             const payload = { ...taskData, status: 'todo' };
-            const res = await fetch(API_ENDPOINTS.TASKS.BASE, {
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.TASKS.BASE}`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });
@@ -73,11 +73,11 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const deleteTask = useCallback(async (id: string) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(API_ENDPOINTS.TASKS.BY_ID(id), { 
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.TASKS.BY_ID(id)}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
-                } 
+                }
             });
             if (res.ok) {
                 setTasks(prevTasks => prevTasks.filter(task => task._id !== id));

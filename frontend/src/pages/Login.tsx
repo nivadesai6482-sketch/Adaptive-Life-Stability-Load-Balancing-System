@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, LogIn } from 'lucide-react';
 import { useToast } from '../store/toastStore';
-import { API_ENDPOINTS } from '../config/apiConfig';
+import API_ENDPOINTS from '../config/apiConfig';
 import { useAuthStore } from '../store/authStore';
 
 export const Login = () => {
@@ -18,13 +18,15 @@ export const Login = () => {
         setLoading(true);
 
         try {
-            const res = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
 
             const data = await res.json();
+            console.log('Login API Response Status:', res.status);
+            console.log('Login API Data:', data);
 
             if (res.ok) {
                 // Store token and user data via reactive store
@@ -58,7 +60,7 @@ export const Login = () => {
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <div className="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                        
+
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
                                 Email address

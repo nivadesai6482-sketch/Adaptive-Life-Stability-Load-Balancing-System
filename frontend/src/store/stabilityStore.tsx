@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { useToast } from './toastStore';
-import { API_ENDPOINTS } from '../config/apiConfig';
+import API_ENDPOINTS from '../config/apiConfig';
 import { DomainScores, calculateLSI, mapHealthToEnergyScore } from '../utils/stabilityCalculator';
 import { HealthData } from '../services/health/fitbitService'; // Reusing interface for now
 import { fetchGoogleFitData } from '../services/health/googleFitService';
@@ -45,7 +45,7 @@ export const StabilityProvider: React.FC<{ children: ReactNode }> = ({ children 
     const fetchHistoricalScores = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(API_ENDPOINTS.STABILITY.BASE, {
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.STABILITY.BASE}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -172,7 +172,7 @@ export const StabilityProvider: React.FC<{ children: ReactNode }> = ({ children 
                 lifeStabilityIndex: lsi
             };
 
-            const res = await fetch(API_ENDPOINTS.STABILITY.BASE, {
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.STABILITY.BASE}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

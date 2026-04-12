@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, UserPlus } from 'lucide-react';
 import { useToast } from '../store/toastStore';
-import { API_ENDPOINTS } from '../config/apiConfig';
+import API_ENDPOINTS from '../config/apiConfig';
 import { useAuthStore } from '../store/authStore';
 
 export const Register = () => {
@@ -19,7 +19,7 @@ export const Register = () => {
         setLoading(true);
 
         try {
-            const res = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
+            const res = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.AUTH.REGISTER}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password })
@@ -76,7 +76,7 @@ export const Register = () => {
                                 />
                             </div>
                         </div>
-                        
+
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
                                 Email address

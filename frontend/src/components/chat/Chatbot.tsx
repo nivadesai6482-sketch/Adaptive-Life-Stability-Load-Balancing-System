@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Send, X, Bot, User, Sparkles, MinusCircle } from 'lucide-react';
 import { useStabilityStore } from '../../store/stabilityStore';
 import { useTaskStore } from '../../store/taskStore';
+import API_ENDPOINTS from '../../config/apiConfig';
 import { calculateLSI } from '../../utils/stabilityCalculator';
 import { predictBurnoutRisk } from '../../utils/burnoutPredictor';
 import { getBotResponse } from '../../utils/chatbotLogic';
@@ -73,7 +74,7 @@ export const Chatbot = () => {
         setIsTyping(true);
 
         try {
-            const response = await fetch(API_ENDPOINTS.CHAT, {
+            const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.CHAT}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
