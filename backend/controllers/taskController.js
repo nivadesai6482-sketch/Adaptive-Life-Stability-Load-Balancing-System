@@ -1,11 +1,11 @@
 const Task = require('../models/Task');
 
-// @desc    Get all tasks
+// @desc    Get all tasks for the logged-in user
 // @route   GET /api/tasks
-// @access  Public
+// @access  Private
 const getTasks = async (req, res) => {
     try {
-        const tasks = await Task.find().sort({ createdAt: -1 });
+        const tasks = await Task.find({ user: req.user.id }).sort({ createdAt: -1 });
         res.status(200).json(tasks);
     } catch (error) {
         console.error(`Error fetching tasks: ${error.message}`);
@@ -15,7 +15,7 @@ const getTasks = async (req, res) => {
 
 // @desc    Create a new task
 // @route   POST /api/tasks
-// @access  Public
+// @access  Private
 const createTask = async (req, res) => {
     try {
         const { title, priority, deadline, status } = req.body;
@@ -25,6 +25,7 @@ const createTask = async (req, res) => {
         }
 
         const newTask = await Task.create({
+            user: req.user.id,
             title,
             priority,
             deadline,
@@ -40,13 +41,18 @@ const createTask = async (req, res) => {
 
 // @desc    Delete a task
 // @route   DELETE /api/tasks/:id
-// @access  Public
+// @access  Private
 const deleteTask = async (req, res) => {
     try {
         const task = await Task.findById(req.params.id);
 
         if (!task) {
             return res.status(404).json({ message: 'Task not found' });
+        }
+
+        // Verify user ownership
+        if (task.user.toString() !== req.user.id) {
+            return res.status(401).json({ message: 'User not authorized' });
         }
 
         await task.deleteOne();

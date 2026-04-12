@@ -5,6 +5,9 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const stabilityRoutes = require('./routes/stabilityRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 // Connect to Database
 connectDB();
@@ -23,6 +26,9 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/stability', stabilityRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Basic Health Check Route
 app.get('/api/health', (req, res) => {

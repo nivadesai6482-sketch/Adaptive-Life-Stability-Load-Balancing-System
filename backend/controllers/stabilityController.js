@@ -2,7 +2,7 @@ const StabilityScore = require('../models/StabilityScore');
 
 // @desc    Save a new daily stability score
 // @route   POST /api/stability
-// @access  Public
+// @access  Private
 const saveStabilityScore = async (req, res) => {
     try {
         const {
@@ -26,6 +26,7 @@ const saveStabilityScore = async (req, res) => {
         }
 
         const newScore = await StabilityScore.create({
+            user: req.user.id,
             timeScore,
             energyScore,
             cognitiveScore,
@@ -41,12 +42,12 @@ const saveStabilityScore = async (req, res) => {
     }
 };
 
-// @desc    Get all historical stability scores
+// @desc    Get all historical stability scores for the logged-in user
 // @route   GET /api/stability
-// @access  Public
+// @access  Private
 const getStabilityScores = async (req, res) => {
     try {
-        const scores = await StabilityScore.find().sort({ createdAt: 1 });
+        const scores = await StabilityScore.find({ user: req.user.id }).sort({ createdAt: 1 });
         res.status(200).json(scores);
     } catch (error) {
         console.error(`Error fetching stability scores: ${error.message}`);
