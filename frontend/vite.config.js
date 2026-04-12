@@ -14,7 +14,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://backend:5000/api',
+        target: 'http://65.2.10.210:5000/api',
         changeOrigin: true,
       },
     },

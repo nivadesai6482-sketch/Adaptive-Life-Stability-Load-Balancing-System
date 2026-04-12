@@ -73,7 +73,7 @@ export const Chatbot = () => {
         setIsTyping(true);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://backend:5000/api'}/chat`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://65.2.10.210:5000/api'}/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
